@@ -1,5 +1,7 @@
 {% extends 'main.html' %}
 {% load static %}
+{% load custom_tags %}
+
 
 {% block content %}
 
@@ -64,18 +66,16 @@
           <th>Project name</th>
           <th>Created_Date</th>
           <th>Update Date</th>
-          {% if not user.is_superuser %}
 
           <th>End_Date</th>
          
-          <th>Creater Name</th>
+          <!-- <th>Creater Name</th> -->
           <th>Priority</th>
-          {% endif %}
 
           <th>Status</th>
 
 
-          {% if user.is_superuser %}
+          {% if request.user|in_group:"Superadmin" %}
 
           <th>Action</th>
           {% endif %}
@@ -91,10 +91,11 @@
           <td>{{ project.created_at|date:"d-m-Y" }}</td>
           <td>{{ project.updated_at|date:"d-m-Y" }}</td> <!-- Updated date field -->
 
-          {% if not user.is_superuser %}
 
             <td>{{ project.to_date|date:"d-m-Y" }}</td>
-            <td>{{ project.assigned_by.username }}</td> <!-- This will show the user who assigned the project -->
+            <!-- <td>{{ project.assigned_by.username }}</td>  -->
+            
+            <!-- This will show the user who assigned the project -->
 
             <td>
               <span class="{% if project.priority|lower == 'low' %}text-secondary
@@ -105,7 +106,6 @@
                   {{ project.priority|capfirst }}
               </span>
           </td>
-{% endif %}
           
           
           
@@ -136,8 +136,8 @@
         </td>
         
         
-        
-        {% if user.is_superuser %}
+        {% if request.user|in_group:"Superadmin" %}
+
 
           <td>
               <div class="filter">
@@ -155,6 +155,7 @@
                 </ul>
               </div>
           </td>
+
           {% endif %}
           
       </tr>
@@ -225,12 +226,36 @@
          
       
         <div class="col-12">
-          <label for="yourUsername" class="form-label">Project Name</label>
+          <label for="yourUsername" class="form-label">Project Name<span class="text-danger">*</span></label>
           <div class="input-group has-validation">
             <input type="text" name="projectname" class="form-control" id="yourUsername" placeholder="Enter your project name" required>
             <div class="invalid-feedback"></div>
           </div>
         </div>
+
+
+        <div class="col-12 mt-3">
+          <label for="yourUsername" class="form-label">Project End Date<span class="text-danger">*</span></label>
+          <div class="input-group has-validation">
+            <input type="date" name="projectdate" class="form-control" id="projectdate"  required>
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+
+        
+        
+<div class="col-md-12 mt-3">
+  <label for="validationPriority" class="form-label">Priority <span class="text-danger">*</span></label>
+  <select class="form-select" id="validationPriority" name="projectpriority" required>
+    <option selected disabled value="">Choose...</option>
+    <option value="Low">Low</option>
+    <option value="Medium">Medium</option>
+    <option value="High">High</option>
+    <option value="Urgent">Urgent</option>
+  </select>
+  <div class="invalid-feedback">Please select a priority level.</div>
+</div>
 
 
       </div>
@@ -267,11 +292,23 @@
                         <label for="projectname{{ project.id }}" class="form-label">Project Name</label>
                         <input type="text" class="form-control" id="projectname{{ project.id }}" name="projectname" value="{{ project.projectname }}">
                     </div>
-                    <div class="mb-3">
+
+
+                    <div class="col-12 mt-3">
+                      <label for="yourUsername{{ project.id }}" class="form-label">Project End Date</label>
+                      <div class="input-group has-validation">
+                        <input type="date" name="todate" class="form-control" id="projectdate{{ project.id }}"  value="{{ project.to_date }}">
+                        <div class="invalid-feedback"></div>
+                      </div>
+                    </div>
+
+
+
+                    <!-- <div class="mb-3">
                         <label for="taskname{{ project.id }}" class="form-label">Task Name</label>
                         <input type="text" class="form-control" id="taskname{{ project.id }}" name="taskname" value="{{ project.taskname }}">
-                    </div>
-                    <div class="mb-3">
+                    </div> -->
+                    <div class="mt-3">
                         <label for="priority{{ project.id }}" class="form-label">Priority</label>
                         <select class="form-control" id="priority{{ project.id }}" name="priority">
                             {% for value, label in project.PRIORITY_CHOICES %}

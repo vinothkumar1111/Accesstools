@@ -178,19 +178,21 @@
         <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
         <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
          
-            <li>
-                <a class="dropdown-item" href="#" 
-                   data-bs-toggle="modal" 
-                   data-bs-target="#editProjectModal" 
-                   data-id="{{ project.id }}" 
-                   data-projectname="{{ project.projectname }}" 
-                   data-taskname="{{ project.taskname }}" 
-                   data-priority="{{ project.priority }}" 
-                   data-fromdate="{{ project.from_date }}" 
-                   data-todate="{{ project.to_date }}">
-                   Edit
-                </a>
-              </li>
+          <li>
+            <a class="dropdown-item" href="#" 
+               data-bs-toggle="modal" 
+               data-bs-target="#editProjectModal" 
+               data-id="{{ project.id }}" 
+               data-projectname="{{ project.projectname }}" 
+               data-taskname="{{ project.taskname }}"  
+               data-priority="{{ project.priority }}" 
+               data-fromdate="{{ project.from_date|date:'Y-m-d' }}" 
+               data-todate="{{ project.to_date
+              |date:'Y-m-d' }}">
+               Edit
+            </a>
+        </li>
+        
               
               <li>
                 <a class="dropdown-item delete-link" href="#" 
@@ -242,10 +244,10 @@
                         <input type="text" class="form-control" id="editProjectName" name="projectname" required>
                     </div>
 
-                    <div class="col-12 mt-4">
+                    <!-- <div class="col-12 mt-4">
                         <label for="editTaskName" class="form-label">Task Name</label>
                         <input type="text" class="form-control" id="editTaskName" name="taskname" required>
-                    </div>
+                    </div> -->
 
                     <div class="col-12 mt-4">
                         <label for="editPriority" class="form-label">Priority</label>
@@ -295,17 +297,17 @@
       }
     });
   </script>
+
   <script>
 
-  
   document.addEventListener('DOMContentLoaded', function () {
     var editButtons = document.querySelectorAll('[data-bs-target="#editProjectModal"]');
-    
+
     editButtons.forEach(function (button) {
         button.addEventListener('click', function () {
             var projectId = button.getAttribute('data-id');
             var projectName = button.getAttribute('data-projectname');
-            var taskName = button.getAttribute('data-taskname');
+            var taskName = button.getAttribute('data-taskname'); // If needed, uncomment the task name input field
             var priority = button.getAttribute('data-priority');
             var fromDate = button.getAttribute('data-fromdate');
             var toDate = button.getAttribute('data-todate');
@@ -313,7 +315,6 @@
             // Set modal fields
             document.getElementById('editProjectId').value = projectId;
             document.getElementById('editProjectName').value = projectName;
-            document.getElementById('editTaskName').value = taskName;
             document.getElementById('editPriority').value = priority;
             document.getElementById('editFromDate').value = fromDate;
             document.getElementById('editToDate').value = toDate;
@@ -324,8 +325,8 @@
         });
     });
 });
-
 </script>
+
 <script>
 
 

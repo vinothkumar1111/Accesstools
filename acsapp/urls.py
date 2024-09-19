@@ -46,8 +46,12 @@ urlpatterns = [
     path('project/<int:project_id>/create_task/', views.create_task, name='create_task'),
     path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
     path('specific_user_tasks_view/<int:project_id>/', views.specific_user_tasks_view, name='specific_user_tasks_view'),
+   
+    path('specificprojectstask/<int:project_id>/users/<int:user_id>/tasks/add/', views.specific_user_task_view_task_mgt, name='specificusertask'),
+    path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
+    path('update-task/<int:task_id>/', views.update_task, name='update_task'),
+    path('project/edit/<int:project_id>/', views.edit_projects, name='edit_project'),
 
-    
     # path('project/<int:project_id>/tasks/', views.project_tasks, name='project_tasks'),
     # path('add_comment/', views.add_comment, name='add_comment'),
 

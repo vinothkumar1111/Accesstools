@@ -13,6 +13,7 @@ from django.utils.dateformat import format
 from django.db.models import Max
 from django.utils.timezone import localtime
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 
 def createuserpage(req):
@@ -260,12 +261,18 @@ def todopgt(request):
      print("pgt function")
      if request.method == 'POST':
         projectname = request.POST.get('projectname')
+        projectdate = request.POST.get('projectdate')
+        projectpriority = request.POST.get('projectpriority')
+
+
         print(projectname)
-        if projectname:
+        if projectname:     
             print("pgt if")
             # Create and save the project
             Project.objects.create(
                 projectname=projectname,
+                to_date=projectdate,
+                priority=projectpriority,
                 user=request.user,  # Assign the currently logged-in user
                 assigned_by=request.user  # Assign the currently logged-in user as the creator
 
@@ -311,7 +318,7 @@ def delete_project(request, project_id):
 
     archived_project = ArchivedProject(
         projectname=project.projectname,
-        taskname=project.taskname,
+        # taskname=project.taskname,
         priority=project.priority,
         from_date=project.from_date,
         to_date=project.to_date,
@@ -545,27 +552,27 @@ def edit_project(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     
     if request.method == 'POST':
-        if request.user.is_superuser:
-            project.projectname = request.POST.get('projectname')
-            # project.priority = request.POST.get('priority')
-            project.from_date = request.POST.get('fromdate')
-            # print(project.taskname)
+        # if request.user.is_superuser:
+            # project.projectname = request.POST.get('projectname')
+            # # project.priority = request.POST.get('priority')
+            # project.from_date = request.POST.get('fromdate')
+            # # print(project.taskname)
             # project.to_date = request.POST.get('todate')
-        else:
+        # else:
 
         
 
             project.projectname = request.POST.get('projectname')
-            project.taskname = request.POST.get('taskname')
+            # project.taskname = request.POST.get('taskname')
             project.priority = request.POST.get('priority')
             project.from_date = request.POST.get('fromdate')
             project.to_date = request.POST.get('todate')
         
-        project.save()
-        if request.user.is_superuser:
+            project.save()
+            # if request.user.is_superuser:
             return redirect("todlistpage")
-        else:
-            return redirect('user_project', user_id=project.user.id)
+            # else:
+            #     return redirect('user_project', user_id=project.user.id)
 
 
 
@@ -583,7 +590,6 @@ def assigned_projects_view(request):
     else:
         projects = Project.objects.none()  # No projects if not authenticated
         print(projects,"username else")
-
 
     context = {
         'projects': projects
@@ -727,6 +733,96 @@ def specific_user_tasks_view(request, project_id):
     }
     
     return render(request, 'specific_user_task.html', context)
+
+
+
+def specific_user_task_view_task_mgt(request, project_id, user_id):
+    if request.method == 'POST':
+        # Retrieve project and user objects
+        project = get_object_or_404(Project, id=project_id)
+        user = get_object_or_404(User, id=user_id)
+
+        # Get form data
+        taskname = request.POST.get('taskname')
+        priority = request.POST.get('priority')
+        from_date = request.POST.get('fromdate')
+        to_date = request.POST.get('todate')
+
+        # Create a new task object
+        task = Task(
+            taskname=taskname,
+            priority=priority,
+            from_date=from_date,
+            to_date=to_date,
+            user=user,
+            project=project
+        )
+        task.save()
+
+        # Display success message and redirect to project page (or wherever you want)
+        # messages.success(request, 'Task created successfully.')
+        return redirect('specific_user_tasks_view', project_id=project.id)
+
+    else:
+        # If it's a GET request, render the form page
+        return render(request, 'specific_user_task_form.html')
+    
+
+
+@csrf_exempt  # For handling AJAX request
+def delete_task(request, task_id):
+    if request.method == 'POST':
+        task = get_object_or_404(Task, id=task_id)
+        task.delete()
+        return JsonResponse({'message': 'Task deleted successfully'}, status=200)
+    else:
+        return JsonResponse({'message': 'Invalid request method'}, status=400)
+    
+
+
+# View to update the task
+def update_task(request, task_id):
+    if request.method == 'POST':
+        task = get_object_or_404(Task, id=task_id)
+        
+        # Get the updated values from the POST request
+        taskname = request.POST.get('taskname')
+        priority = request.POST.get('priority')
+        from_date = request.POST.get('fromdate')
+        to_date = request.POST.get('todate')
+        
+        # Update the task object with the new data
+        task.taskname = taskname
+        task.priority = priority
+        task.from_date = from_date
+        task.to_date = to_date
+        
+        # Save the updated task to the database
+        task.save()
+
+        # Return a JSON response indicating success
+        return JsonResponse({'status': 'success'})
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+
+def edit_projects(request, project_id):
+    project = get_object_or_404(Project, id=project_id)  # Get the project by ID
+    if request.method == 'POST':
+        # Get the updated values from the form
+        project.projectname = request.POST.get('projectname')
+        project.priority = request.POST.get('priority')
+        project.from_date = request.POST.get('fromdate')
+        project.to_date = request.POST.get('todate')
+
+        # Save the updated project details
+        project.save()
+
+        # Redirect to a project list or a specific project page
+        return redirect('user_project', user_id=project.user.id)  # Assuming project has a related 'user' field
+
+    return HttpResponse("Invalid request method", status=400)
+
 
 # @login_required
 # def task_detail_view(request, project_id):
