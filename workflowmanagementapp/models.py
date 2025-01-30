@@ -182,6 +182,16 @@ class GroupMessage(models.Model):
 
     def __str__(self):
         return f'Message by {self.sender.username} in {self.group.name}'
+    
+class chatNotification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # The user who will receive the notification
+    message = models.ForeignKey(Message, on_delete=models.CASCADE)  # The message related to the notification
+    is_read = models.BooleanField(default=False)  # Flag to mark whether the notification has been read
+    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp of when the notification was created
+
+    def __str__(self):
+        return f"Notification for {self.user.username} regarding message {self.message.id}"
+
 
 
 class chatLoginHistory(models.Model):

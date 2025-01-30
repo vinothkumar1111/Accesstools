@@ -14,7 +14,9 @@ urlpatterns = [
     path('search/', views.search_users, name='search_users'),
     path('get-notifications/', views.get_notifications, name='get_notifications'),
     path('mark-message-as-read/', views.mark_message_as_read, name='mark_message_as_read'),
-    # path('sms/<int:user_id>/', views.sms, name='sms'),
+    path('mark_notification_as_read/<int:notification_id>/', views.chat_mark_notification_as_read, name='mark_notification_as_read'),
+
+    path('charget_notifications/', views.charget_notifications, name='charget_notifications'),
 
     path('mark-notifications-as-read/', views.mark_notifications_as_read, name='mark_notifications_as_read'),
     path('delete-message/<int:message_id>/', views.delete_message, name='delete_message'),

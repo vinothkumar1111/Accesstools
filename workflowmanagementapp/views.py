@@ -189,6 +189,13 @@ def send_message(request, recipient_id=None, group_id=None):
                     message.file = file_path
 
                 message.save()
+ # Create a notification for the receiver
+                chatNotification.objects.create(
+                    user=recipient,
+                    message=message,
+                    is_read=False
+                )
+              
 
     # Fetch messages for rendering
     # grouped_messages = {}
@@ -374,19 +381,17 @@ def send_group_message(request, group_id):
 def check_message_status(request):
     messages = Message.objects.filter(receiver=request.user, is_delivered=True).values('id', 'is_read', 'is_delivered')
     return JsonResponse({'messages': list(messages)})
-
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from .models import Message, GroupMessage
-import json
 
 @login_required
 def get_notifications(request):
     notifications = []
     current_user = request.user
 
-    # Unread messages from individual users
+    # Fetch unread messages from individual users
     unread_user_messages = Message.objects.filter(receiver=current_user, is_read=False)
     unread_user_counts = unread_user_messages.values('sender').annotate(unread_count=Count('id'))
 
@@ -398,11 +403,8 @@ def get_notifications(request):
             'type': 'user',
         })
 
-    # Unread messages from groups
-    unread_group_messages = GroupMessage.objects.filter(
-        group__members=current_user
-    ).exclude(sender=current_user).filter(is_read=False)
-
+    # Fetch unread messages from groups
+    unread_group_messages = GroupMessage.objects.filter(group__members=current_user).exclude(sender=current_user).filter(is_read=False)
     unread_group_counts = unread_group_messages.values('group').annotate(unread_count=Count('id'))
 
     for unread in unread_group_counts:
@@ -414,6 +416,11 @@ def get_notifications(request):
         })
 
     return JsonResponse({'notifications': notifications})
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Message, GroupMessage
+import json
 
 @csrf_exempt
 @login_required
@@ -433,6 +440,7 @@ def mark_notifications_as_read(request):
             return JsonResponse({"success": True})
 
     return JsonResponse({"success": False}, status=400)
+
 
 
 
@@ -492,6 +500,39 @@ def search_users(request):
         user.last_message = last_message
 
     return render(request, 'sms.html', {'users': users, 'groupschatname': groupschatname})
+
+
+@login_required
+def charget_notifications(request):
+    notifications = []
+    current_user = request.user
+
+    # Fetch unread notifications for the current user
+    unread_notifications = chatNotification.objects.filter(user=current_user, is_read=False)
+
+    for notification in unread_notifications:
+        notifications.append({
+            'id': notification.id,
+            'message_id': notification.message.id,
+            'user_id': notification.user.id,
+            'username': notification.message.sender.username,  # Add sender's username to notification
+            'unread_count': 1,  # Single message, hence 1 unread message
+            'type': 'user',
+        })
+
+    return JsonResponse({'notifications': notifications})
+
+
+@csrf_exempt
+@login_required
+def chat_mark_notification_as_read(request, notification_id):
+    try:
+        notification = Notification.objects.get(id=notification_id, user=request.user)
+        notification.is_read = True
+        notification.save()
+        return JsonResponse({'success': True})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False}, status=404)
 
 
 @login_required

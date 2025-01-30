@@ -187,8 +187,8 @@ def tables(request):
 @login_required
 def dashboard(req):
     # Exclude the currently logged-in user
-    users = User.objects.exclude(id=req.user.id)
-
+    users = User.objects.exclude(id=req.user.id).exclude(groups__name='Superadmin')
+# 
     # Default user is the currently logged-in user
     selected_user = req.user
     tasks = Task.objects.filter(user=selected_user)

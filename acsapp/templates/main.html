@@ -167,73 +167,74 @@ document.addEventListener("DOMContentLoaded", fetchNotifications);
  
  <!-- Include the notification script here -->
  <script>
-   document.addEventListener("DOMContentLoaded", function () {
-    const processedNotifications = new Set(JSON.parse(localStorage.getItem("processedNotifications") || "[]"));
-    let lastChecked = Date.now(); // Keep track of when you last checked for notifications
- 
-    // Function to fetch and handle new notifications
-    function fetchNotificationCounts() {
-        fetch("{% url 'get_notifications' %}")
-            .then(response => response.json())
-            .then(data => {
-                if (data.notifications) {
-                    let newNotifications = false;
- 
-                    data.notifications.forEach(notification => {
-                        // If notification is new (not processed before), trigger a desktop notification
-                        if (!processedNotifications.has(notification.id)) {
-                            processedNotifications.add(notification.id);
-                            showDesktopNotification(notification);
-                            newNotifications = true;  // Flag to check if new notifications exist
+    document.addEventListener("DOMContentLoaded", function () {
+        const processedNotifications = new Set(JSON.parse(localStorage.getItem("processedNotifications") || "[]"));
+       
+
+        // Add the notification sound file
+        const notificationSound = new Audio("{% static 'NiceAdmin/NiceAdmin/assets/notification/notification.mp3' %}");
+    
+        // Function to fetch notification counts
+        function fetchNotificationCounts() {
+            fetch("{% url 'charget_notifications' %}")  // Adjusted the URL to your updated function
+                .then(response => response.json())
+                .then(data => {
+                    if (data.notifications) {
+                        let newNotifications = false;
+    
+                        // Loop through each notification
+                        data.notifications.forEach(notification => {
+                            // If the notification is new (not processed before), show an alert
+                            if (!processedNotifications.has(notification.id)) {
+                                processedNotifications.add(notification.id);
+    
+                                // Play notification sound
+                                notificationSound.play().catch(error => console.error("Error playing sound:", error));
+    
+                                // Show alert with sender's username
+                                alert(`You have a new message from TaskApp: ${notification.username}`);
+                                newNotifications = true;
+                            }
+                        });
+    
+                        // If new notifications were processed, update localStorage
+                        if (newNotifications) {
+                            localStorage.setItem("processedNotifications", JSON.stringify(Array.from(processedNotifications)));
                         }
-                    });
- 
-                    // If new notifications were processed, update localStorage
-                    if (newNotifications) {
-                        localStorage.setItem("processedNotifications", JSON.stringify(Array.from(processedNotifications)));
                     }
-                }
-            })
-            .catch(error => console.error("Error fetching notifications:", error));
-    }
- 
-    // Function to show a desktop notification
-    function showDesktopNotification(notification) {
-        if (!("Notification" in window)) {
-            console.log("This browser does not support desktop notifications.");
-            return;
+                })
+                .catch(error => console.error("Error fetching notifications:", error));
         }
+    
+        // Fetch notifications initially when the page loads
+        fetchNotificationCounts();
+    
+        // Check for new notifications every 10 seconds
+        setInterval(fetchNotificationCounts, 10000);
+    });
+    </script>
+    
+<script>
+
  
-        if (Notification.permission === "granted") {
-            const options = {
-                body: `You have ${notification.unread_count} new messages from task management chatapp.`,
-            };
- 
-            new Notification("New Message", options);
-        } else if (Notification.permission !== "denied") {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    showDesktopNotification(notification);
-                }
-            });
+function markNotificationAsRead(notificationId) {
+    fetch(`/mark_notification_as_read/${notificationId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Notification marked as read');
+        } else {
+            console.error('Failed to mark notification as read');
         }
-    }
- 
-    // Check for notifications periodically, but only if last check was not too recent
-    setInterval(() => {
-        const currentTime = Date.now();
-        if (currentTime - lastChecked > 3000) { // Wait at least 3 seconds between checks
-            fetchNotificationCounts();
-            lastChecked = currentTime; // Update last checked time
-        }
-    }, 10000);  // Check every 10 seconds
- 
-    // Fetch notifications initially when the page loads
-    fetchNotificationCounts();
-});
- 
+    });
+}
 </script>
- 
+
  
      
     
