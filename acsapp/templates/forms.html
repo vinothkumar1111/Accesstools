@@ -1,0 +1,224 @@
+{% extends 'main.html' %}
+{% block content %}
+<body>
+
+ 
+
+
+  <main id="main" class="main">
+
+    <div class="pagetitle">
+      <h1>Form Validation</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+          <li class="breadcrumb-item">Forms</li>
+          <li class="breadcrumb-item active">Validation</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+    
+    <section class="section">
+      <div class="row">
+      
+
+        <div class="col-lg-12">
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">HR Form Access</h5>
+              <!-- <p>For custom Bootstrap form validation messages, you’ll need to add the <code>novalidate</code> boolean attribute to your <code>&lt;form&gt;</code>. This disables the browser default feedback tooltips, but still provides access to the form validation APIs in JavaScript. </p> -->
+
+              <!-- Custom Styled Validation -->
+              <form class="row g-3 needs-validation" novalidate>
+                <div class="col-md-4">
+                  <label for="validationCustom01" class="form-label">User ID</label>
+                  <input type="number" class="form-control" id="validationCustom01" value="John" required>
+                  <div class="valid-feedback">
+                    Looks good!
+                  </div>
+                </div>
+             
+                <div class="col-md-4">
+                  <label for="validationCustom02" class="form-label">User name</label>
+                  <input type="text" class="form-control" id="validationCustom02" value="Doe" required>
+                  <div class="valid-feedback">
+                    Looks good!
+                  </div>
+                </div>
+
+
+                <div class="col-md-4">
+                  <label for="validationCustom03" class="form-label">Date Of Birth</label>
+                  <input type="date" class="form-control" id="validationCustom03" required>
+                  <div class="invalid-feedback">
+                    Please provide a valid Date Of Birth.
+                  </div>
+                </div>
+
+                <div class="col-md-4">
+                  <label for="validationCustom03" class="form-label">Qualification</label>
+                  <input type="text" class="form-control" id="validationCustom03" required>
+                  <div class="invalid-feedback">
+                    Please provide a valid Qualification.
+                  </div>
+                </div>
+
+
+                
+                <div class="col-md-4">
+                  <label for="validationCustom03" class="form-label">Date Of Join</label>
+                  <input type="date" class="form-control" id="validationCustom03" required>
+                  <div class="invalid-feedback">
+                    Please provide a valid Date Of Join
+                  </div>
+                </div>
+
+
+<!-- 
+                <div class="col-md-4">
+                  <label for="validationCustom04" class="form-label">Clients to be Assigned</label>
+                  <select class="form-select" id="validationCustom04" required multiple>
+                    <option selected disabled value="">Choose...</option>
+                    <option>Karthick</option>
+                    <option>Jehan</option>
+                    <option>Arun</option>
+                    <option>Kannan</option>
+                    <option>Manoj</option>
+
+                  </select>
+                  <div class="invalid-feedback">
+                    Please select one
+                  </div>
+                </div> -->
+
+
+
+                <div class="col-md-4">
+                  <label for="validationCustom04" class="form-label">Clients to be Assigned</label>
+                  <select class="form-select" id="validationCustom04" multiple size="5">
+                      <option value="Karthick">Karthick</option>
+                      <option value="Jehan">Jehan</option>
+                      <option value="Arun">Arun</option>
+                      <option value="Kannan">Kannan</option>
+                      <option value="Manoj">Manoj</option>
+                  </select>
+                  <div id="selected-items" class="mt-2"></div>
+              </div>
+              
+              
+              
+               
+                <!-- <div class="col-md-4">
+                  <label for="validationCustomUsername" class="form-label">Username</label>
+                  <div class="input-group has-validation">
+                    <span class="input-group-text" id="inputGroupPrepend">@</span>
+                    <input type="text" class="form-control" id="validationCustomUsername" aria-describedby="inputGroupPrepend" required>
+                    <div class="invalid-feedback">
+                      Please choose a username.
+                    </div>
+                  </div>
+                </div> -->
+                <!-- <div class="col-md-6">
+                  <label for="validationCustom03" class="form-label">City</label>
+                  <input type="text" class="form-control" id="validationCustom03" required>
+                  <div class="invalid-feedback">
+                    Please provide a valid city.
+                  </div>
+                </div> -->
+              
+              
+                <!-- <div class="col-md-3">
+                  <label for="validationCustom04" class="form-label">State</label>
+                  <select class="form-select" id="validationCustom04" required>
+                    <option selected disabled value="">Choose...</option>
+                    <option>...</option>
+                  </select>
+                  <div class="invalid-feedback">
+                    Please select a valid state.
+                  </div>
+                </div>
+               -->
+              
+                <!-- <div class="col-md-3">
+                  <label for="validationCustom05" class="form-label">Zip</label>
+                  <input type="text" class="form-control" id="validationCustom05" required>
+                  <div class="invalid-feedback">
+                    Please provide a valid zip.
+                  </div>
+                </div> -->
+              
+              
+                <!-- <div class="col-12">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
+                    <label class="form-check-label" for="invalidCheck">
+                      Agree to terms and conditions
+                    </label>
+                    <div class="invalid-feedback">
+                      You must agree before submitting.
+                    </div>
+                  </div>
+                </div> -->
+                <div class="col-12">
+                  <button class="btn btn-primary" type="submit">Submit form</button>
+                  <button class="btn btn-danger" type="submit">Edit</button>
+                  <button class="btn btn-danger" type="reset">Reset</button>
+
+
+                </div>
+              </form><!-- End Custom Styled Validation -->
+
+            </div>
+          </div>
+
+        
+
+        </div>
+      </div>
+    </section>
+
+  </main><!-- End #main -->
+
+  
+
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  <script>
+    document.getElementById('validationCustom04').addEventListener('change', function() {
+        const selectedOptions = Array.from(this.selectedOptions).map(option => option.text);
+        document.getElementById('selected-items').innerHTML = selectedOptions.join(', ');
+    });
+    </script>
+    
+
+<style>
+  .selected-item {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    padding: 5px 10px;
+    margin: 5px;
+    border-radius: 20px;
+    position: relative;
+}
+
+.selected-item .close-btn {
+    cursor: pointer;
+    margin-left: 10px;
+    font-weight: bold;
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    background-color: red;
+    border-radius: 50%;
+    padding: 2px 5px;
+}
+
+</style>
+
+</body>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+{% endblock content %}

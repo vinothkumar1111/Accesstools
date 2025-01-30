@@ -1,0 +1,44 @@
+<!-- archived_users.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archived Users</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        function confirmRestore(event) {
+            // Confirm with the user before restoring
+            return confirm("Are you sure you want to restore this user?");
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="mt-5">Archived Users</h1>
+        <div class="list-group mt-3">
+            {% for user in archived_users %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">{{ user.username }}</h5>
+                        <small>{{ user.email }}</small>
+                    </div>
+                    <form method="POST" action="{% url 'restore_user' user.username %}" onsubmit="return confirmRestore(event);">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm">Restore User</button>
+                    </form>
+                </div>
+            {% empty %}
+                <div class="alert alert-info">No archived users found.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>

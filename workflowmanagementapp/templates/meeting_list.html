@@ -1,0 +1,354 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<body>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Include jQuery and Select2 JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  <!-- Include Select2 CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+  <!-- Include jQuery (If not already included) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <!-- Include Select2 JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  
+
+<style>
+    .clickable-row {
+        cursor: pointer;
+    }
+</style>
+
+ 
+
+  <main id="main" class="main">
+
+    <div class="pagetitle">
+      <h1>Meeting List</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'workflowmgt' %}">Workflowmanagement</a></li>
+          <li class="breadcrumb-item active">Meeting List</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+
+    
+
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-12">              
+           <!-- Button to toggle visibility of the card -->
+<button id="projectbtn" class="btn btn-primary mb-3">Create Meeting</button>
+
+<!-- Initially hidden card -->
+<div class="col-lg-12" id="projectCard" style="display: none;">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Meeting Creation</h5>
+     
+      <form class="row g-3 needs-validation" method="POST" action="{% url 'meetingsave' %}" novalidate>
+        <!-- Form fields -->
+         {% csrf_token %}
+        <div class="col-md-4">
+          <label for="validationCustom01" class="form-label">Topic <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="validationCustom01" name="topic" value="{{ topic }}" readonly>
+          <div class="valid-feedback">Enter the topic</div>
+        </div>
+
+        <div class="col-md-4">
+            <label for="validationCustom01" class="form-label">Organiser Company Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="validationCustom01" name="organiser">
+            <div class="valid-feedback">Enter the Organiser Company Name</div>
+          </div>
+
+          <div class="col-md-4">
+            <label for="validationCustom01" class="form-label">Partner Company Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="validationCustom01" name="partner" >
+            <div class="valid-feedback">Enter the Partner Company Name</div>
+          </div>
+
+          <div class="col-md-4">
+            <label for="validationCustom01" class="form-label">Partner Logo Link </label>
+            <input type="text" class="form-control" id="validationCustom01" name="partner_logo" >
+            <div class="valid-feedback">Enter the Partner Partner Logo Link</div>
+          </div>
+
+          <div class="col-md-4">
+            <label for="validationCustom01" class="form-label">Event Type <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="validationCustom01" name="type" >
+            <div class="valid-feedback">Enter the Type</div>
+          </div>
+
+      
+<div class="col-md-4">
+    <label for="participants" class="form-label">Participants<span class="text-danger">*</span></label>
+    <select id="participants" name="participants" class="form-select" multiple data-placeholder="Select Participants">
+      <option></option>
+      {% for user in users %}
+      <option value="{{ user.id }}">{{ user.username }}</option>
+      {% endfor %}
+  </select>
+  
+  
+</div>
+
+
+<!-- Initialize Select2 -->
+<script>
+  $(document).ready(function() {
+      $('#participants').select2({
+          placeholder: "Select Participants", // Proper placeholder
+          allowClear: true,                 // Allow clearing selection
+          width: '100%'                      // Ensure full-width dropdown
+      });
+  });
+</script>
+          
+        
+<div class="col-md-4">
+    <label for="validationPriority" class="form-label">Priority <span class="text-danger">*</span></label>
+    <select class="form-select" id="validationPriority" name="priority" required>
+      <option selected disabled value="">Select Priority...</option>
+      <option value="High">High</option>
+      <option value="Medium">Medium</option>
+      <option value="Low">Low</option>
+    </select>
+    <div class="invalid-feedback">Please select a priority level.</div>
+  </div>
+
+
+  <div class="col-md-4">
+    <label for="validationCustom01" class="form-label">Location<span class="text-danger">*</span></label>
+    <input type="text" class="form-control" id="validationCustom01" name="location" >
+    <div class="valid-feedback">Enter the location</div>
+  </div>
+
+<div class="col-md-4">
+    <label for="fromDate" class="form-label">Event Date <span class="text-danger">*</span></label>
+    <input type="date" class="form-control" id="fromDate" name="date" required>
+    <div class="invalid-feedback">Please select a valid start date.</div>
+  </div>
+
+
+  <div class="col-md-4">
+    <label for="validationCustom01" class="form-label">Start Time<span class="text-danger">*</span></label>
+    <input type="time" class="form-control" id="validationCustom01" name="starttime" >
+    <div class="valid-feedback">Enter the Start Time</div>
+  </div>
+
+  
+  <div class="col-md-4">
+    <label for="validationCustom01" class="form-label">End Time<span class="text-danger">*</span></label>
+    <input type="time" class="form-control" id="validationCustom01" name="endtime" >
+    <div class="valid-feedback">Enter the Start Time</div>
+  </div>
+  
+
+
+  <div class="col-md-4">
+    <label for="validationCustom01" class="form-label">Link</label>
+    <input type="text" class="form-control" id="validationCustom01" name="link" >
+    <!-- <div class="valid-feedback">Enter the link</div> -->
+  </div>
+
+  <div class="col-md-12">
+    <label for="agenda" class="form-label">Agenda</label>
+    <div id="agendas-container">
+        <div class="input-group mb-2">
+            <textarea name="agenda[]" class="form-control" rows="2" required></textarea>
+            <button type="button" class="btn btn-danger ms-2" onclick="removeAgendaField(this)">Del</button>
+        </div>
+    </div>
+    <button type="button" class="btn btn-secondary mt-2" onclick="addAgendaField()">Add Agenda</button>
+</div>
+
+
+
+      
+        <div class="col-12">
+          <button class="btn btn-primary" type="submit">Create</button>
+        </div>
+      </form><!-- End Custom Styled Validation -->
+    </div>
+  </div>
+</div>
+
+
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"> Project List</h5>
+
+<div class="table-responsive">
+              <table class="table datatable" id="userTable">
+                <thead>
+                    <tr>
+                        <tr>
+                            <th>Topic</th>
+                            <th>Organiser</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for meeting in meetings %}
+                    <tr class="text-nowrap">
+                        <td class="clickable-row text-nowrap text-primary" data-href="{% url 'minutes_of_meeting' meeting.id %}">{{ meeting.topic }}</td>
+                        <td>{{ meeting.organiser }}</td>
+                        <td>{{ meeting.date }}</td>
+                        <td>
+                            {% if not meeting.actual_starttime or not meeting.actual_endtime or not meeting.remark %}
+                                <span class="badge bg-danger">Meeting Not Started</span>
+                            {% elif meeting.remark and meeting.project.tasks.exists %}
+                                <span class="badge bg-success">Completed</span>
+                            {% else %}
+                                <span class="badge bg-warning">Assignment Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'meetingsend' id=meeting.id %}" class="btn btn-sm btn-outline-primary">Send Invitation</a>
+                                <a href="{% url 'after_meeting' id=meeting.id %}" class="btn btn-sm btn-outline-primary">Add Remarks</a>
+                                <a 
+                                    href="{% url 'points_agreed' id=meeting.id %}" 
+                                    class="btn btn-sm btn-outline-primary assign-task-btn"
+                                    data-requires-remark="{% if not meeting.actual_starttime or not meeting.actual_endtime or not meeting.remark %}true{% else %}false{% endif %}"
+                                    data-message="Please Add Remarks to Assign Tasks.">
+                                    Assign Task
+                                </a>
+                                <a href="{% url 'send_mom' id=meeting.id %}" class="btn btn-sm btn-outline-primary assign-task-btn"
+                                data-requires-assign="{% if not meeting.remark or not meeting.project.tasks.exists %}true{% else %}false{% endif %}"
+                                data-mess="Please Assign Task To Send M-O-M Mail">
+                                <!-- <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                Loading... -->
+                                Send MOM Mail</a>
+                                
+                                <form method="POST" action="{% url 'delete_meeting' id=meeting.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this meeting?')">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+</div>
+
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+  
+
+
+
+
+
+</body>
+
+
+
+<script>
+    document.getElementById("projectbtn").addEventListener("click", function() {
+      var card = document.getElementById("projectCard");
+      var button = document.getElementById("projectbtn");
+      
+      // Toggle visibility
+      if (card.style.display === "none" || card.style.display === "") {
+        card.style.display = "block";
+        button.textContent = "Close Meeting"; // Change button text to "Close Project"
+      } else {
+        card.style.display = "none";
+        button.textContent = "Create Meeting"; // Change button text back to "Create Project"
+      }
+    });
+  </script>
+
+<script>
+    function addAgendaField() {
+        const agendasContainer = document.getElementById('agendas-container');
+        const agendaField = document.createElement('div');
+        agendaField.className = 'input-group mb-2';
+
+        agendaField.innerHTML = `
+            <textarea name="agenda[]" class="form-control" rows="2" placeholder="Enter agenda"></textarea>
+            <button type="button" class="btn btn-danger ms-2" onclick="removeAgendaField(this)">Del</button>
+        `;
+        agendasContainer.appendChild(agendaField);
+    }
+
+    function removeAgendaField(button) {
+        button.parentElement.remove();
+    }
+</script>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Handle clickable rows
+        const rows = document.querySelectorAll('.clickable-row');
+        rows.forEach(row => {
+            row.addEventListener('click', function (event) {
+                const target = event.target;
+                // Prevent row navigation if the clicked element is a button
+                if (target.tagName === 'A' || target.tagName === 'BUTTON') {
+                    event.stopPropagation();
+                    return;
+                }
+                const href = this.getAttribute('data-href');
+                if (href) {
+                    window.location.href = href;
+                }
+            });
+        });
+
+        // Handle Assign Task buttons
+        const assignTaskButtons = document.querySelectorAll('.assign-task-btn');
+        assignTaskButtons.forEach(button => {
+            button.addEventListener('click', function (event) {
+                const requiresRemark = this.dataset.requiresRemark === "true";
+                const message = this.dataset.message;
+                if (requiresRemark) {
+                    event.preventDefault(); // Prevent navigation
+                    alert(message); // Display the message
+                }
+            });
+        });
+
+        // Handle Send MOM Mail buttons
+        const sendMomMailButtons = document.querySelectorAll('.assign-task-btn');
+        sendMomMailButtons.forEach(button => {
+            button.addEventListener('click', function (event) {
+                const requiresAssign = this.dataset.requiresAssign === "true";
+                const message = this.dataset.mess;
+                if (requiresAssign) {
+                    event.preventDefault(); // Prevent navigation
+                    alert(message); // Display the message
+                }
+            });
+        });
+    });
+</script>
+
+
+{% endblock content %}

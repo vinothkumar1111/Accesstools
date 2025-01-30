@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+</head>
+<body>
+    <h1>Welcome, {{ username }}</h1>
+    <p>You are logged in as {{ username }}.</p>
+    <form method="POST" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Login again</button>
+  </form>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        if (localStorage.getItem('sessionTimeout') === 'true') {
+            // Show the SweetAlert message
+            Swal.fire({
+                icon: 'warning',
+                title: 'Session Timeout',
+                text: 'Login again.',
+                confirmButtonText: 'OK'
+            });
+  
+            // Clear the session timeout flag so the message only shows once
+            localStorage.removeItem('sessionTimeout');
+        }
+    });
+  </script>
+  
+</body>
+</html>

@@ -1,0 +1,430 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<body>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <body>
+
+  
+
+ 
+
+  <main id="main" class="main">
+
+    <div class="pagetitle">
+      <h1>Email Setup</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashbaord</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"></a>Email Inbox</li>
+          <li class="breadcrumb-item active"><a href="{% url 'dashboard' %}"></a>Email Setup</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-12">              
+           <!-- Button to toggle visibility of the card -->
+<button id="projectbtn" class="btn btn-primary mb-3">Create Email</button>
+
+<!-- Initially hidden card -->
+<div class="col-lg-12" id="projectCard" style="display: none;">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Email Configuration</h5>
+   
+      <!-- <p>For custom Bootstrap form validation messages, you’ll need to add the <code>novalidate</code> boolean attribute to your <code>&lt;form&gt;</code>. This disables the browser default feedback tooltips, but still provides access to the form validation APIs in JavaScript.</p> -->
+      <!-- Custom Styled Validation -->
+
+
+        <!-- Email Form -->
+        <form
+        id="sendMessageForm"
+          class="row g-4 needs-validation"
+          method="post"
+          action="{% url 'send_message' %}"
+          enctype="multipart/form-data"
+          novalidate
+        >
+          {% csrf_token %}
+          <div class="col-md-12">
+            <input type="email" class="form-control" name="to_email" placeholder="To Email Address" id="to-email" data-list="" 
+            required style="width: 260%;">
+            <div class="valid-feedback">
+              Looks good!
+            </div>
+          </div>
+
+          <div class="col-md-12">
+           <input type="email" class="form-control" name="cc" placeholder="CC (comma-separated)" id="cc-email"  data-multiple
+           data-list=""  style="width: 260%;">
+
+            <div class="valid-feedback">
+              Looks good!
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <input type="text" class="form-control" name="subject" placeholder="Subject" required>
+            <div class="valid-feedback">
+              Looks good!
+            </div>
+          </div>
+
+          <div class="col-md-12">
+              <textarea id="description" name="message"></textarea>
+          </div>
+
+          <div class="col-md-12">
+              <input type="file" class="form-control" name="file">
+              <div class="valid-feedback">
+              Looks good!
+            </div>
+          </div>
+
+          <div class="col-12">
+            <button class="btn btn-primary" type="submit">Send</button>
+          </div>
+        </form>
+        <!-- End Email Form -->
+    
+    </div>
+  </div>
+</div>
+
+
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">email</h5>
+
+<div class="table-responsive">
+              <table class="table datatable" id="userTable">
+                <thead>
+                    <tr>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Subject</th>
+                        <th>Body</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for message in messages %}
+                    <tr>
+                        <td>{{ message.sender.email }}</td> <!-- Replace with the actual sender field -->
+                        <td>
+                            {% if message.receiver %}
+                                {{ message.receiver.email }}
+                            {% else %}
+                                {{ message.recipient_email }}
+                            {% endif %}
+                        </td>
+                                                <td>{{ message.subject }}</td>
+                        <td>
+                            {{ message.content|truncatechars:7 }}
+                            {% if message.content|length > 7 %}
+                                <a href="javascript:void(0);" class="read-more" data-content="{{ message.content }}">Read More</a>
+                            {% endif %}
+                        </td>                        <td>
+                            <a href="javascript:void(0);" class="delete-message" data-url="{% url 'delete_message' message.id %}">
+                                <i class="fas fa-trash-alt text-primary"></i> <!-- Delete icon -->
+                            </a>
+                        </td>
+                        
+                        
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No messages found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            
+            </table>
+</div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+ 
+<!-- Script to Toggle Form and Initialize Select2 -->
+<script>
+    document.getElementById("projectbtn").addEventListener("click", function() {
+        var card = document.getElementById("projectCard");
+        var button = document.getElementById("projectbtn");
+        
+        // Toggle visibility
+        if (card.style.display === "none" || card.style.display === "") {
+            card.style.display = "block";
+            button.textContent = "Close Email"; // Change button text to "Close Task"
+  
+            // Reinitialize Select2
+            $('#level2_users').select2({
+                placeholder: "Select users", // Placeholder text
+                allowClear: true            // Allow clearing selection
+            });
+        } else {
+            card.style.display = "none";
+            button.textContent = "Create Email"; // Change button text back to "Create Task"
+        }
+    });
+  
+    // Initialize Select2 on page load for hidden elements
+    $(document).ready(function() {
+        $('.select2').select2({
+            placeholder: "Select users", // Placeholder text
+            allowClear: true            // Allow clearing selection
+        });
+    });
+  </script>
+  
+
+  
+<!-- Load TinyMCE JS -->
+<script src="{% static 'tinymce/tinymce.min.js' %}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        tinymce.init({
+            selector: 'textarea',
+            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount hr filemanager',
+            toolbar: 'undo redo | styles | bold italic underline backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | h1 h2 h3 h4 h5 h6 | removeformat | hr | help',
+            height: 300,
+            menubar: false,
+            setup: function (editor) {
+                editor.on('change', function () {
+                    tinymce.triggerSave(); // Ensure the textarea is updated
+                });
+            }
+        });
+    });
+</script>
+
+  
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Select the form by its ID
+        const form = document.getElementById('sendMessageForm'); // Replace with your form ID
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const formData = new FormData(form);
+
+            // Show a loading SweetAlert
+            Swal.fire({
+                title: 'Sending Email...',
+                text: 'Please wait while we process your request.',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading(); // Show loading spinner
+                }
+            });
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]').value,
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.close(); // Close the loading SweetAlert
+
+                if (data.status === "success") {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Email Sent",
+                        text: data.message,
+                        showConfirmButton: false,
+                        timer: 1500,
+                        toast: true,
+                        position: 'top-end'
+                    }).then(() => {
+                        form.reset(); // Optionally reset the form after success
+                    });
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: data.message,
+                        showConfirmButton: true,
+                        position: 'top-end'
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.close(); // Close the loading SweetAlert in case of error
+                Swal.fire({
+                    icon: "error",
+                    title: "Network Error",
+                    text: "An unexpected error occurred. Please check your connection and try again.",
+                    showConfirmButton: true,
+                    position: 'top-end'
+                });
+                console.error('Error:', error);
+            });
+        });
+    });
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Fetch stored emails from the server
+        fetch("{% url 'get_stored_emails' %}")  // Create a URL endpoint for fetching emails
+            .then(response => response.json())
+            .then(data => {
+                const emailList = data.emails; // Assumes server response has a 'emails' key
+
+                // Initialize Awesomplete for 'To Email'
+                const toEmailInput = document.getElementById('to-email');
+                new Awesomplete(toEmailInput, {
+                    list: emailList
+                });
+
+                // Initialize Awesomplete for 'CC' (supports multiple emails)
+                const ccEmailInput = document.getElementById('cc-email');
+                new Awesomplete(ccEmailInput, {
+                    list: emailList,
+                    filter: function (text, input) {
+                        return Awesomplete.FILTER_CONTAINS(text, input.match(/[^,]*$/)[0]);
+                    },
+                    replace: function (text) {
+                        const before = this.input.value.match(/^.+,\s*|/)[0];
+                        this.input.value = before + text + ", ";
+                    }
+                });
+            })
+            .catch(error => console.error("Error fetching emails:", error));
+    });
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteIcons = document.querySelectorAll('.delete-message');
+        deleteIcons.forEach(icon => {
+            icon.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.getAttribute('data-url');
+                
+                // Use SweetAlert for confirmation
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                // Show success message with SweetAlert
+                                Swal.fire(
+                                    'Deleted!',
+                                    data.message,
+                                    'success'
+                                );
+                                const row = this.closest('tr'); // Get the row
+                                row.remove(); // Remove the row from the table
+                            } else {
+                                // Show error message
+                                Swal.fire(
+                                    'Error!',
+                                    data.message,
+                                    'error'
+                                );
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                    }
+                });
+            });
+        });
+    });
+    </script>
+
+    <!-- Modal -->
+<div class="modal fade" id="contentModal" tabindex="-1" role="dialog" aria-labelledby="contentModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="contentModalLabel">Message Content</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be dynamically loaded here -->
+                <p id="modalContent"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const readMoreLinks = document.querySelectorAll('.read-more');
+    const modalContent = document.getElementById('modalContent');
+
+    readMoreLinks.forEach(link => {
+        link.addEventListener('click', function () {
+            const content = this.getAttribute('data-content');
+            modalContent.textContent = content; // Set the modal content
+            $('#contentModal').modal('show'); // Show the modal
+        });
+    });
+});
+
+</script>
+
+    
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Awesomplete CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css">
+
+<!-- Awesomplete JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+
+  
+
+
+
+</body>
+
+
+{% endblock content %}

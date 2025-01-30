@@ -1,0 +1,11 @@
+<h2>Your Inbox</h2>
+
+{% if emails %}
+    <ul>
+        {% for email in emails %}
+            <li><strong>From:</strong> {{ email.sender }} <strong>Subject:</strong> {{ email.subject }} <strong>Sent At:</strong> {{ email.sent_at }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No emails in your inbox.</p>
+{% endif %}

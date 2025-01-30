@@ -1,0 +1,7 @@
+DB_Name= Accsystooldb
+DB_Password=12345%$#@! -->CAPSLOCK ON
+
+
+
+
+MYSQLPASSWORD=12345%$#@!   -->CAPSLOCK ON

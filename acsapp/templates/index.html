@@ -1,0 +1,28 @@
+
+<h2>Inbox</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>From</th>
+            <th>Subject</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for message in messages %}
+        <tr>
+            <td>{{ message.sender.username }}</td>
+            <td>{{ message.subject|default:"No Subject" }}</td>
+            <td>{{ message.created_at|date:"Y-m-d H:i" }}</td>
+            <td>
+                <a href="{% url 'message_detail' message.id %}" class="btn btn-info btn-sm">View</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No messages in your inbox.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

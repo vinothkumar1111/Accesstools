@@ -1,0 +1,414 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<body>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Include jQuery and Select2 JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+ 
+
+ 
+
+  <main id="main" class="main">
+
+    <div class="pagetitle">
+      <h1>User Projects</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+          <!-- <li class="breadcrumb-item">Tables</li> -->
+          <li class="breadcrumb-item active">User Projects</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+
+    
+
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-12">              
+           <!-- Button to toggle visibility of the card -->
+<button id="projectbtn" class="btn btn-primary mb-3">Create Project</button>
+
+<!-- Initially hidden card -->
+<div class="col-lg-12" id="projectCard" style="display: none;">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Project Creation</h5>
+      <!-- <p>For custom Bootstrap form validation messages, you’ll need to add the <code>novalidate</code> boolean attribute to your <code>&lt;form&gt;</code>. This disables the browser default feedback tooltips, but still provides access to the form validation APIs in JavaScript.</p> -->
+      <!-- Custom Styled Validation -->
+      <form class="row g-3 needs-validation" method="post" action="{% url 'create_project' %}" novalidate>
+        <!-- Form fields -->
+         {% csrf_token %}
+        <div class="col-md-6">
+          <label for="validationCustom01" class="form-label">Project name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="validationCustom01" name="projectname" required>
+          <div class="valid-feedback">Enter the project name</div>
+        </div>
+
+        <!-- <div class="col-md-4">
+          <label for="validationCustom02" class="form-label">Task name <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="validationCustom02" name="taskname" required>
+          <div class="valid-feedback">Enter the Task name</div>
+        </div> -->
+
+        
+<div class="col-md-6">
+    <label for="validationPriority" class="form-label">Priority <span class="text-danger">*</span></label>
+    <select class="form-select" id="validationPriority" name="priority" required>
+      <option selected disabled value="">Choose...</option>
+      <option value="Low">Low</option>
+      <option value="Medium">Medium</option>
+      <option value="High">High</option>
+      <option value="Urgent">Urgent</option>
+    </select>
+    <div class="invalid-feedback">Please select a priority level.</div>
+  </div>
+
+
+<div class="col-md-6">
+    <label for="fromDate" class="form-label">From Date <span class="text-danger">*</span></label>
+    <input type="date" class="form-control" id="fromDate" name="fromdate" required>
+    <div class="invalid-feedback">Please select a valid start date.</div>
+  </div>
+  
+  <div class="col-md-6">
+    <label for="toDate" class="form-label">To Date <span class="text-danger">*</span></label>
+    <input type="date" class="form-control" id="toDate"  name="todate"required>
+    <div class="invalid-feedback">Please select a valid end date.</div>
+  </div>
+  
+
+
+        <!-- <div class="col-md-6">
+          <label for="validationCustom03" class="form-label">City</label>
+          <input type="text" class="form-control" id="validationCustom03" required>
+          <div class="invalid-feedback">Please provide a valid city.</div>
+        </div> -->
+
+
+        <!-- <div class="col-md-3">
+          <label for="validationCustom04" class="form-label">State</label>
+          <select class="form-select" id="validationCustom04" required>
+            <option selected disabled value="">Choose...</option>
+            <option>...</option>
+          </select>
+          <div class="invalid-feedback">Please select a valid state.</div>
+        </div> -->
+        <!-- <div class="col-md-3">
+          <label for="validationCustom05" class="form-label">Zip</label>
+          <input type="text" class="form-control" id="validationCustom05" required>
+          <div class="invalid-feedback">Please provide a valid zip.</div>
+        </div> -->
+        <!-- <div class="col-12">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
+            <label class="form-check-label" for="invalidCheck">
+              Agree to terms and conditions
+            </label>
+            <div class="invalid-feedback">You must agree before submitting.</div>
+          </div>
+        </div> -->
+        <div class="col-12">
+          <button class="btn btn-primary" type="submit">Create</button>
+        </div>
+      </form><!-- End Custom Styled Validation -->
+    </div>
+  </div>
+</div>
+
+
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title"> Project List</h5>
+
+
+              <table class="table datatable" id="userTable">
+                <thead>
+                    <tr>
+                        <th>Project Name</th>
+                        <th>From Date</th>
+                        <th>To Date</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects %}
+                    <tr>
+                      <td>
+                        <a href="{% url 'task_detail' project.id %}">
+                            {{ project.projectname }}
+                        </a>
+                    </td>                    
+                        <td>{{ project.from_date }}</td>
+                        <td>{{ project.to_date }}</td>
+                        <td>
+                            <span 
+                            {% if project.priority == "High" or project.priority == "Urgent" %}
+                                class="text-danger"
+                            {% elif project.priority == "Medium" %}
+                                class="text-primary"
+                            {% elif project.priority == "Low" %}
+                                class="text-secondary"
+                            {% endif %}
+                            >
+                            {{ project.priority }}
+                            </span>
+                        </td> 
+                        
+                        <td>
+                          {% if project.tasks.count == 0 %}
+                              <span class="badge bg-secondary">Not Started</span>
+                          {% elif project.all_tasks_completed %}
+                              <span class="badge bg-success">Completed</span>
+                          {% else %}
+                              <span class="badge bg-warning">Pending</span>
+                          {% endif %}
+                        </td>
+                        
+                    
+                        
+                      <!-- Edit and Delete Options -->
+<td>
+    <div class="filter">
+        <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+         
+          <li>
+            <a class="dropdown-item" href="#" 
+               data-bs-toggle="modal" 
+               data-bs-target="#editProjectModal" 
+               data-id="{{ project.id }}" 
+               data-projectname="{{ project.projectname }}" 
+               data-taskname="{{ project.taskname }}"  
+               data-priority="{{ project.priority }}" 
+               data-fromdate="{{ project.from_date|date:'Y-m-d' }}" 
+               data-todate="{{ project.to_date|date:'Y-m-d' }}">
+               Edit
+            </a>
+        </li>
+        
+              
+              <li>
+                <a class="dropdown-item delete-link" href="#" 
+                   data-id="{{ project.id }}" 
+                   data-projectname="{{ project.projectname }}">
+                   Delete
+                </a>
+              </li>
+              
+        </ul>
+    </div>
+</td>
+
+                        
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No projects available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+  
+  <div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="" id="editProjectForm">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProjectModalLabel">Edit Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editProjectId" name="project_id">
+                    
+                    <div class="col-12">
+                        <label for="editProjectName" class="form-label">Project Name</label>
+                        <input type="text" class="form-control" id="editProjectName" name="projectname" required>
+                    </div>
+
+                    <!-- <div class="col-12 mt-4">
+                        <label for="editTaskName" class="form-label">Task Name</label>
+                        <input type="text" class="form-control" id="editTaskName" name="taskname" required>
+                    </div> -->
+
+                    <div class="col-12 mt-4">
+                        <label for="editPriority" class="form-label">Priority</label>
+                        <select class="form-select" id="editPriority" name="priority" required>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <label for="editFromDate" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="editFromDate" name="fromdate" required>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <label for="editToDate" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="editToDate" name="todate" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+  <script>
+    document.getElementById("projectbtn").addEventListener("click", function() {
+      var card = document.getElementById("projectCard");
+      var button = document.getElementById("projectbtn");
+      
+      // Toggle visibility
+      if (card.style.display === "none" || card.style.display === "") {
+        card.style.display = "block";
+        button.textContent = "Close Project"; // Change button text to "Close Project"
+      } else {
+        card.style.display = "none";
+        button.textContent = "Create Project"; // Change button text back to "Create Project"
+      }
+    });
+  </script>
+
+  <script>
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var editButtons = document.querySelectorAll('[data-bs-target="#editProjectModal"]');
+
+    editButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            var projectId = button.getAttribute('data-id');
+            var projectName = button.getAttribute('data-projectname');
+            var taskName = button.getAttribute('data-taskname'); // If needed, uncomment the task name input field
+            var priority = button.getAttribute('data-priority');
+            var fromDate = button.getAttribute('data-fromdate');
+            var toDate = button.getAttribute('data-todate');
+
+            // Set modal fields
+            document.getElementById('editProjectId').value = projectId;
+            document.getElementById('editProjectName').value = projectName;
+            document.getElementById('editPriority').value = priority;
+            document.getElementById('editFromDate').value = fromDate;
+            document.getElementById('editToDate').value = toDate;
+
+            // Dynamically set the form action URL
+            var form = document.getElementById('editProjectForm');
+            form.action = '/project/edit/' + projectId + '/';
+        });
+    });
+});
+</script>
+
+<script>
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    var deleteLinks = document.querySelectorAll('.delete-link');
+    
+    deleteLinks.forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            event.preventDefault();
+            
+            var projectId = link.getAttribute('data-id');
+            var projectName = link.getAttribute('data-projectname');
+            
+            // Confirmation dialog
+            var confirmed = confirm('Are you sure you want to delete the project "' + projectName + '"?');
+            
+            if (confirmed) {
+                // Send delete request
+                fetch('/project/delete/' + projectId + '/', {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        // Show success message and reload the page
+                        alert('Project deleted successfully');
+                        window.location.reload(); // Reload the page to reflect changes
+                    } else {
+                        alert('Failed to delete the project');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the project');
+                });
+            }
+        });
+    });
+});
+
+</script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var fromDateInput = document.getElementById('fromDate');
+    var toDateInput = document.getElementById('toDate');
+    var form = fromDateInput.closest('form');
+
+    function validateDates() {
+      var fromDate = new Date(fromDateInput.value);
+      var toDate = new Date(toDateInput.value);
+
+      if (fromDate && toDate && toDate < fromDate) {
+        toDateInput.setCustomValidity('The "To Date" must be the same as or greater than the "From Date".');
+      } else {
+        toDateInput.setCustomValidity('');
+      }
+    }
+
+    fromDateInput.addEventListener('change', validateDates);
+    toDateInput.addEventListener('change', validateDates);
+
+    form.addEventListener('submit', function(event) {
+      validateDates();
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+  });
+</script>
+
+
+</body>
+
+
+{% endblock content %}

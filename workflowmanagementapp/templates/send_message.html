@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp-like Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <h2 class="text-center my-4">Chat with {{ recipient.username }}</h2>
+
+    <div class="container chat-container">
+        <div class="message-container mb-4" id="message-container">
+            {% for message in messages %}
+                <div id="message-{{ message.id }}" class="message {% if message.sender == user %}sent{% else %}received{% endif %} mb-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ message.sender.username }}</strong>
+                        <small class="text-muted">{{ message.created_at|date:"H:i" }}</small>
+                    </div>
+                    <div 
+                        class="message-content p-3 bg-light rounded border mt-2" 
+                        style="cursor: pointer;" 
+                        onclick="quoteMessage('{{ message.content }}', '{{ message.id }}')"
+                    >
+                        {% if message.parent_message %}
+                            <div class="quoted-message p-2 mb-2 border rounded" style="background-color: #f0f0f0;" onclick="scrollToMessage('{{ message.parent_message.id }}')">
+                                <small>{{ message.parent_message.sender.username }}: {{ message.parent_message.content }}</small>
+                            </div>
+                        {% endif %}
+                        <p>{{ message.content }}</p>
+                    </div>
+
+                    
+                    <!-- Tick mark icon for the message -->
+                    <span class="tick-mark"><i class="fas fa-check"></i></span>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Message input form -->
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Quoted Message (if any) -->
+            <div id="quoted-message-container" class="p-2 mb-2 border rounded d-none" style="background-color: #f0f0f0;">
+                <small id="quoted-message"></small>
+                <button type="button" class="btn-close float-end" aria-label="Close" onclick="clearQuotedMessage()"></button>
+            </div>
+
+            <textarea id="message-textarea" name="content" rows="3" class="form-control mb-3" placeholder="Type your message..."></textarea>
+            <input type="hidden" name="parent_message_id" id="parent-message-id">
+            <button type="submit" class="btn btn-primary">Send Message</button>
+        </form>
+    </div>
+
+    <script>
+        // Function to handle quoting a message
+        function quoteMessage(content, messageId) {
+            const quotedMessageContainer = document.getElementById('quoted-message-container');
+            const quotedMessage = document.getElementById('quoted-message');
+            const parentMessageIdInput = document.getElementById('parent-message-id');
+            const messageTextarea = document.getElementById('message-textarea'); // Get the text area
+
+            // Set the quoted message and parent message ID
+            quotedMessage.textContent = content;
+            parentMessageIdInput.value = messageId;
+            quotedMessageContainer.classList.remove('d-none');
+
+            // Scroll to the text area
+            messageTextarea.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            messageTextarea.focus(); // Optionally focus on the text area
+        }
+
+        // Function to clear the quoted message
+        function clearQuotedMessage() {
+            const quotedMessageContainer = document.getElementById('quoted-message-container');
+            const quotedMessage = document.getElementById('quoted-message');
+            const parentMessageIdInput = document.getElementById('parent-message-id');
+
+            quotedMessage.textContent = '';
+            parentMessageIdInput.value = '';
+            quotedMessageContainer.classList.add('d-none');
+        }
+
+        // Function to scroll to a specific message and highlight it
+        function scrollToMessage(messageId) {
+            const messageElement = document.getElementById(`message-${messageId}`);
+
+            if (messageElement) {
+                // Scroll to the message
+                messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Add the highlight class
+                messageElement.classList.add('highlight');
+
+                // Remove the highlight after a delay
+                setTimeout(() => {
+                    messageElement.classList.remove('highlight');
+                }, 2000); // Adjust the delay as needed
+            }
+        }
+
+        // Function to scroll to the last message when the page loads
+        window.onload = function() {
+            const messageContainer = document.getElementById('message-container');
+            messageContainer.scrollTop = messageContainer.scrollHeight;  // Scroll to the bottom
+        }
+    </script>
+
+    <style>
+        .chat-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .message-container {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            max-width: 80%;
+            position: relative;
+        }
+
+        .sent {
+            align-self: flex-end;
+            text-align: right;
+        }
+
+        .received {
+            align-self: flex-start;
+            text-align: left;
+        }
+
+        .message-content {
+            background-color: #dcf8c6;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .message-content:hover {
+            background-color: #e6f7d4;
+        }
+
+        .quoted-message {
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        /* Highlight class for temporary background change */
+        .highlight {
+            animation: highlight-animation 2s ease-out;
+            background-color: #ffef96 !important;
+        }
+
+        @keyframes highlight-animation {
+            from {
+                background-color: #ffef96;
+            }
+            to {
+                background-color: transparent;
+            }
+        }
+
+       /* Styling for the tick mark inside the message */
+.tick-mark {
+    position: absolute;
+    bottom: 10px;   /* Adjust to position inside the message */
+    right: 10px;    /* Adjust to position inside the message */
+    font-size: 18px; /* Adjust size */
+        /* Change to green for seen status */
+}
+
+    </style>
+</body>
+</html>

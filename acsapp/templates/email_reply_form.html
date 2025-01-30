@@ -1,0 +1,6 @@
+<form method="POST">
+    {% csrf_token %}
+    <h3>Reply to: {{ original_email.subject }}</h3>
+    <textarea name="body" rows="6" placeholder="Your reply..."></textarea>
+    <button type="submit">Send Reply</button>
+</form>

@@ -1,0 +1,49 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select2 Example</title>
+    <!-- Select2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <!-- Bootstrap CSS (Optional, for styling) -->
+</head>
+<body>
+<div class="container mt-5">
+    <div class="col-md-12">
+        <label for="userSelect" class="form-label">Select Users <span class="text-danger">*</span></label>
+        <select class="form-select" id="userSelect" name="userSelect[]" multiple required>
+            <!-- Options for users -->
+            <option value="vinoth">Vinoth</option>
+            <option value="krishna">Krishna</option>
+            <option value="jagankumar">Jagankumar</option>
+            <option value="kumar">Kumar</option>
+        </select>
+        <div class="invalid-feedback">Please select at least one user.</div>
+    </div>
+</div>
+
+<!-- jQuery (Required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Select2 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<!-- Bootstrap JS (Optional, for styling) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for the dropdown
+        $('#userSelect').select2({
+            placeholder: "Select users", // Placeholder text
+            allowClear: true // Allows clearing the selection
+        });
+    });
+</script>
+</body>
+</html>
+
+{% endblock content %}

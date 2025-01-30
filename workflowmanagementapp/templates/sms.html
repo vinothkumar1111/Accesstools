@@ -1,0 +1,1192 @@
+{% extends 'main.html' %}
+{% load custom_tags %}
+
+{% load custom_filters %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Include jQuery and Select2 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+<meta name="csrf-token" content="{{ csrf_token }}">  <!-- CSRF Token here -->
+
+<main id="main" class="main">
+
+    <div class="pagetitle">
+        <h1>Messenger</h1>
+        <nav>
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item active">Messenger</li>
+          </ol>
+        </nav>
+      </div><!-- End Page Title -->
+
+      
+
+<div class="container bootstrap snippets bootdey">
+    <div class="row">
+      <div class="col-md-4 bg-white" style="overflow-y: auto;">
+        <form id="searchForm" style="margin-left: 10px; width: 250px; height: 30px;">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="search" id="searchInput" name="q" class="form-control mt-2" placeholder="Search..." 
+                       style="height: 30px;">
+                <span class="input-group-text mt-2">
+                    <!-- <i class="fas fa-search"></i> -->
+                </span>
+            </div>
+        </form>
+        {% if request.user|in_group:"Admin" or request.user|in_group:"SuperAdmin" %}
+
+        <button type="button" class="btn btn-primary col-12 mt-4" data-bs-toggle="modal" data-bs-target="#basicModal">
+            <i class="fas fa-plus"></i> Create Group
+        </button>
+
+      {% endif %}
+        
+        <div id="userListContainer" class="custom-scrollbar">
+            {% include 'partials/user_list.html' %}
+        </div>
+    </div>
+    
+        <!--=========================================================-->
+        <!-- selected chat -->
+    	<div class="col-md-8 bg-white ">
+        <div class="chat-header d-flex align-items-center p-3  border-bottom">
+          {% if groups %}
+
+          <div class="chat-header-img me-3" title="{{ groups  }}">
+            <!-- Add a placeholder profile picture -->
+            <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ groups  }}" 
+                 alt="{{ groups }}" 
+                 class="rounded-circle" 
+                 style="width: 50px; height: 50px;">
+        </div>
+        {% endif %}
+        
+
+        
+        <div class="chat-header-info">
+            {% if groups %}
+                <!-- Group Name -->
+                <h5 class="mb-0">
+                    <strong>{{ groups.name }}</strong>
+                    
+  
+                </h5>
+        
+              
+                <div>
+                    {% if group_members|length > 8 %}
+                        <!-- Show the first 8 members -->
+                        {% for member in group_members|slice:":8" %}
+                            {{ member.username }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        ...
+                        {% if group_creator %}
+                        ,{{group_creator.username}}
+                        {% endif %}
+  
+        
+                        <!-- Link to show all members in the modal -->
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#groupModal">More</a>
+                    {% else %}
+                        <!-- Show all members if fewer than or equal to 8 -->
+                        {% for member in group_members %}
+                            {{ member.username }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        {% if group_creator %}
+                        ,{{group_creator.username}}
+                        {% endif %}
+                    {% endif %}
+                </div>
+  
+  
+               
+        
+               
+            {% else %}
+            <div class="d-flex align-items-center">
+                <div class="chat-header-img me-3" title="{{ recipient.username }}">
+                    <!-- Add a placeholder profile picture -->
+                    <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ recipient.username }}" 
+                         alt="{{ recipient.username }}" 
+                         class="rounded-circle" 
+                         style="width: 50px; height: 50px;">
+                </div>
+                <!-- Move username to the right -->
+                <h5 class="mb-0 ms-auto"><strong>{{ recipient.username }}</strong></h5>
+            </div>
+
+            <div class="message" data-message-id="{{ message.id }}">
+                <small class="text-muted">
+                    {% if message.sender == user %}
+                    <span class="badge bg-success">Online</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Offline</span>
+
+                     
+                    {% endif %}
+                </small>
+            </div>
+            
+            {% endif %}
+        </div>
+        
+      
+      
+        
+        
+      </div>
+      
+
+      <div class="chat-message custom-scrollbar">
+        <ul class="chat">
+            {% for category, messages in grouped_messages.items %}
+            <li class="date-separator text-center">
+                <strong>{{ category }}</strong>
+            </li>
+    
+            {% for message in messages %}
+            <li id="message-{{ message.id }}" class="message mb-3 {% if message.sender == user %}sent{% else %}received{% endif %}">
+                <span class="chat-img {% if message.sender == user %}pull-right{% else %}pull-left{% endif %}">
+
+                   
+
+                    <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ message.sender.username|default:user.email }}" 
+                         alt="{{ message.sender.username }}" class="img-fluid rounded-circle" style="width: 30px; height: 30px;">
+                </span>
+                <div class="chat-body clearfix {% if message.sender == user %}text-end{% else %}text-start{% endif %}">
+                    <small class="text-muted {% if message.sender == user %}pull-left{% else %}pull-right{% endif %}">
+                        <i class="fa fa-clock-o"></i> {{ message.created_at|date:"H:i" }}
+                    </small>
+                    <div class="message-content bg-light rounded border mt-4 {% if message.sender == user %}pull-right{% else %}pull-left{% endif %}" 
+                         style="cursor: pointer;" 
+                         onclick="quoteMessage('{{ message.content|escapejs }}', '{{ message.id }}', {% if message.file %}'{{ message.file.name|escapejs }}'{% else %}''{% endif %})"
+                         oncontextmenu="showContextMenu(event, {{ message.id }})">
+    
+                         {% if message.parent_message %}
+                         <div class="quoted-message p-2 mb-2 border rounded" style="background-color: #f0f0f0;" 
+                              onclick="scrollToMessage('{{ message.parent_message.id }}')">
+                             <small>
+                                 {{ message.parent_message.sender.username }}: {{ message.parent_message.content }}
+                                 {% if message.parent_message.file %}
+                                     [File: {{ message.parent_message.file.name|slice:"-50:" }}]
+                                 {% endif %}
+                             </small>
+                         </div>
+                     {% endif %}
+                     
+                     {% if message.group and message.sender != request.user %}
+                     <strong class="text-primary">{{ message.sender.username }}</strong>
+                     {% endif %}
+                        <div class="message-content p-3 bg-light rounded border mt-2">
+                            {% if message.content %}
+                            <!-- <strong>{{ message.sender.username }}</strong>:  -->
+
+                                <span style="font-size: 12px;">{{ message.content }}</span>
+                            {% endif %}
+                            <div class="message" data-message-id="{{ message.id }}">
+                                {% if message.sender == user %}
+                                    <span class="tick-mark {% if message.is_read %}text-primary{% else %}text-dark{% endif %}" style="font-size: 12px;">
+                                        <i class="fas fa-check"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            {% if message.file %}
+                                {% if message.file|is_image %}
+                                    <a href="{{ message.file.url }}" target="_blank">
+                                        <img src="{{ message.file.url }}" alt="Image" class="img-fluid rounded" style="max-width: 150px;">
+                                    </a>
+                                {% else %}
+                                    <a href="{{ message.file.url }}" target="_blank" class="btn btn-link">
+                                        <i class="fas fa-file-alt"></i> {{ message.file.name|slice:"22:" }}
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+            {% endfor %}
+        </ul>
+    </div>
+    
+    {% if not group_creator %}
+
+    <form method="POST" enctype="multipart/form-data" id="messageForm" onsubmit="return validateMessageForm()" >
+      {% csrf_token %}
+      <div id="quoted-message-container" class="p-2 mb-2 border rounded d-none" style="background-color: #f0f0f0;">
+          <small id="quoted-message"></small>
+          <button type="button" class="btn-close float-end" aria-label="Close" onclick="clearQuotedMessage()"></button>
+          <input type="hidden" id="parent-message-id" name="parent_message_id">
+
+      </div>
+      <div class="chat-box bg-white">
+          <div class="input-group">
+              <!-- File Upload -->
+              <span class="input-group-text bg-white border-0">
+                  <label for="file-upload" style="cursor: pointer; margin: 0;">
+                      <i class="fas fa-paperclip"></i>
+                  </label>
+                  <input 
+                      type="file" 
+                      id="file-upload" 
+                      name="file" 
+                      style="display: none;" 
+                      onchange="updateFilePreview(this)">
+              </span>
+             
+              <div class="file-preview-container" style="flex-grow: 1; position: relative;">
+
+                <textarea 
+                class="form-control border no-shadow no-rounded" 
+                placeholder="Type your message here" 
+                id="message-textarea" 
+                name="content" 
+                style="width: 100%; position: relative; padding-right: 50px; height: 38px;"></textarea>
+                
+            
+              </div>
+  
+              <!-- Submit Button -->
+              <div class="input-group-append">
+                  <button class="btn btn-primary" type="submit">
+                      <i class="fas fa-paper-plane"></i>
+                  </button>
+              </div>
+          </div>
+          
+          <!-- File Preview -->
+          <div 
+              id="file-preview" 
+              class="file-preview p-2 rounded d-none" 
+              style="margin-top: 10px; background-color: rgba(240, 240, 240, 0.9); border: 1px solid #ddd; padding: 5px; display: flex; justify-content: space-between; align-items: center;">
+              <span id="file-name" style="font-size: 12px; color: #555;"></span>
+              <button 
+                  type="button" 
+                  class="btn-close" 
+                  aria-label="Close" 
+                  onclick="clearFilePreview()">
+              </button>
+          </div>
+      </div>
+  </form>
+
+  {% else %}
+  <form method="POST" enctype="multipart/form-data" id="sinlgemessageForm" action="{% if groups %}{% url 'send_group_message' groups.id %}{% else %}#{% endif %}">
+
+    {% csrf_token %}
+    <div id="quoted-message-container" class="p-2 mb-2 border rounded d-none" style="background-color: #f0f0f0;">
+        <small id="quoted-message"></small>
+        <button type="button" class="btn-close float-end" aria-label="Close" onclick="clearQuotedMessage()"></button>
+        <input type="hidden" id="parent-message-id" name="parent_message_id">
+    </div>
+
+    <div class="chat-box bg-white">
+        <div class="input-group">
+            <!-- File Upload -->
+            <span class="input-group-text bg-white border-0">
+                <label for="file-upload" style="cursor: pointer; margin: 0;">
+                    <i class="fas fa-paperclip"></i>
+                </label>
+                <input 
+                    type="file" 
+                    id="file-upload" 
+                    name="file" 
+                    style="display: none;" 
+                    onchange="updateFilePreview(this)">
+            </span>
+
+            <div class="file-preview-container" style="flex-grow: 1; position: relative;">
+                <textarea 
+                    class="form-control border no-shadow no-rounded" 
+                    placeholder="Type your group message here" 
+                    id="message-textarea" 
+                    name="content" 
+                    style="width: 100%; position: relative; padding-right: 50px; height: 38px;"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- File Preview -->
+        <div 
+            id="file-preview" 
+            class="file-preview p-2 rounded d-none" 
+            style="margin-top: 10px; background-color: rgba(240, 240, 240, 0.9); border: 1px solid #ddd; padding: 5px; display: flex; justify-content: space-between; align-items: center;">
+            <span id="file-name" style="font-size: 12px; color: #555;"></span>
+            <button 
+                type="button" 
+                class="btn-close" 
+                aria-label="Close" 
+                onclick="clearFilePreview()">
+            </button>
+        </div>
+    </div>
+</form>
+
+
+
+
+{% endif %}
+
+
+  
+  
+          
+                
+		</div>         
+	</div>
+</div>
+
+
+
+<!-- GROUP MODAL -->
+<!-- Modal 1 -->
+ 
+<div class="modal fade" id="basicModal" tabindex="-1" aria-labelledby="basicModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="basicModalLabel">Chat Group</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post" action="{% url 'create_group' %}" id="createGroupForm">
+          {% csrf_token %}
+          <div class="modal-body">
+              <div class="col-12">
+                  <label for="yourUsername" class="form-label">Group Name <span class="text-danger">*</span></label>
+                  <div class="input-group has-validation">
+                      <input type="text" name="group_name" class="form-control" id="yourUsername" placeholder="Enter your Group Name" required>
+                  </div>
+              </div>
+      
+              <div class="col-md-12 mt-3">
+                  <label for="validationPriority" class="form-label">Select Users <span class="text-danger">*</span></label>
+                  <div class="scrollable-container">
+                      {% for user in users %}
+                      <div class="form-check">
+                          <input class="form-check-input" type="checkbox" id="userCheckbox{{ user.id }}" name="level1_users" value="{{ user.id }}">
+                          <label class="form-check-label" for="userCheckbox{{ user.id }}">{{ user.username }}</label>
+                      </div>
+                      {% endfor %}
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary" id="submitButton">Create</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- End Modal 1 -->
+<!-- Modal 2 -->
+
+
+<div class="modal fade" id="groupModal" tabindex="-1" aria-labelledby="groupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <input type="hidden" id="groupId" value="{{ groups.id }}">
+
+                <h5 class="modal-title" id="groupModalLabel">{{ groups.name }} - Members</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 300px; overflow-y: auto;">
+                <ul>
+                    <h6>Group Creator: <strong>{{ group_creator.username }}</strong></h6>
+                    {% for member in group_members %}
+                        <li>{{ member.username }}</li>
+                        <p></p>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- <div class="modal-footer mt-3 d-flex justify-content-start">
+                <button type="button" id="toggleButton" class="btn btn-primary btn-sm" onclick="showGroupUsers()">
+                    Add Member
+                </button>
+            </div> -->
+
+            <!-- Hidden div for group users -->
+            <div id="group-users-div" class="modal-footer mt-3 d-flex justify-content-start" style="display: none;">
+                <ul id="group-users-list">
+                 
+                </ul>
+               
+            </div>
+
+            <!-- Hide Members Button (Initially hidden) -->
+            <!-- <div id="hide-members-div" class="modal-footer mt-3 d-flex justify-content-start" >
+                <button type="button" id="hideMembersButton" class="btn btn-success btn-sm"   style="display: none;">
+                    Add new Member
+                </button>
+            </div> -->
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+</div> 
+<!-- End Modal 2 -->
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const messages = document.querySelectorAll('.message'); // Adjust selector as per your HTML
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const messageId = entry.target.getAttribute('data-message-id'); // Add a data attribute with message ID
+                fetch("{% url 'mark_message_as_read' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({ message_id: messageId }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        entry.target.querySelector('.tick-mark').classList.add('text-primary');
+                        entry.target.querySelector('.tick-mark').classList.remove('text-dark');
+                    }
+                })
+                .catch(error => console.error('Error marking message as read:', error));
+            }
+        });
+    });
+
+    messages.forEach(message => observer.observe(message));
+});
+
+</script>
+
+<script>
+function checkMessageStatus() {
+  fetch('/workflow/check-message-status/')
+      .then(response => response.json())
+      .then(data => {
+          // Update tick marks dynamically
+          data.messages.forEach(message => {
+              const tickElement = document.getElementById(`message-${message.id}-tick`);
+              if (message.is_read) {
+                  tickElement.innerHTML = '<i class="fas fa-check"></i><i class="fas fa-check"></i>';
+                  tickElement.classList.add('text-primary');
+              } else if (message.is_delivered) {
+                  tickElement.innerHTML = '<i class="fas fa-check"></i>';
+                  tickElement.classList.add('text-dark');
+              }
+          });
+      });
+}
+setInterval(checkMessageStatus, 5000); // Check every 5 seconds
+</script>
+
+
+<script>
+  let selectedMessageId = null;
+
+// Show context menu
+function showContextMenu(event, messageId) {
+    event.preventDefault();
+    selectedMessageId = messageId;
+
+    const menu = document.getElementById('context-menu');
+    menu.style.display = 'block';
+    menu.style.top = `${event.pageY}px`;
+    menu.style.left = `${event.pageX}px`;
+}
+
+// Hide context menu
+document.addEventListener('click', () => {
+    const menu = document.getElementById('context-menu');
+    menu.style.display = 'none';
+});
+
+// Delete message
+function deleteMessage() {
+    if (confirm("Are you sure you want to delete this message?")) {
+        fetch(`/workflow/delete-message/${selectedMessageId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Message deleted successfully');
+                location.reload();
+            } else {
+                alert('Failed to delete message');
+            }
+        });
+    }
+}
+
+</script>
+
+
+
+<script>
+  function validateMessageForm() {
+    // alert("kk");
+      const messageContent = document.getElementById('message-textarea').value.trim();
+      const fileInput = document.getElementById('file-upload');
+      const fileSelected = fileInput.files.length > 0;
+  
+      if (!messageContent && !fileSelected) {
+          alert("Please provide a message or select a file to upload.");
+          return false;
+      }
+      return true;
+  }
+  
+  function updateFilePreview(input) {
+      const file = input.files[0];
+      const filePreview = document.getElementById('file-preview');
+      const fileNameDisplay = document.getElementById('file-name');
+  
+      if (file) {
+          fileNameDisplay.textContent = file.name;
+          filePreview.classList.remove('d-none'); // Show the file preview
+      } else {
+          clearFilePreview();
+      }
+  }
+  
+  function clearFilePreview() {
+      const fileInput = document.getElementById('file-upload');
+      const filePreview = document.getElementById('file-preview');
+  
+      fileInput.value = ''; // Clear the file input
+      filePreview.classList.add('d-none'); // Hide the file preview
+  }
+  </script>
+  
+<script>
+  function updateFileName(input) {
+      const fileNameDisplay = document.getElementById('file-name-display');
+      if (input.files && input.files[0]) {
+          fileNameDisplay.textContent = `Selected file: ${input.files[0].name}`;
+      } else {
+          fileNameDisplay.textContent = '';
+      }
+  }
+  </script>
+  
+  
+<script>
+   $(document).ready(function () {
+    $('#searchInput').on('keyup', function () {
+        const query = $(this).val();
+
+        $.ajax({
+            url: "{% url 'search_users' %}",
+            type: "POST",
+            data: {
+                q: query,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function (response) {
+                $('#userListContainer').html(response.html); // Update the user and group list
+            },
+            error: function (xhr, status, error) {
+                console.error("Error:", error);
+            }
+        });
+    });
+});
+
+</script>
+<script>
+  document.getElementById('messageForm').addEventListener('submit', function (event) {
+  const fileInput = document.getElementById('file-upload');
+  const file = fileInput.files[0];
+
+  if (file && file.size > 5 * 1024 * 1024) { // 10 MB limit
+      event.preventDefault();
+      const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
+          }
+      });
+      Toast.fire({
+          icon: "error",
+          title: "File size should not exceed 5 MB."
+      }).then(() => {
+          // Refresh the page after the toast disappears
+          location.reload();
+      });
+  }
+});
+
+</script>
+
+
+<script>
+ // Function to handle quoting a message
+ function quoteMessage(content, messageId, fileName = '') {
+    const quotedMessageContainer = document.getElementById('quoted-message-container');
+    const quotedMessage = document.getElementById('quoted-message');
+    const parentMessageIdInput = document.getElementById('parent-message-id');
+    const messageTextarea = document.getElementById('message-textarea');
+
+    // Build the quoted message content
+    let quotedContent = content;
+
+    if (fileName) {
+        // Extract only the base file name from the file path
+        const extractedFileName = fileName.split('/').pop(); // Get the file name after the last '/'
+        quotedContent += ` [File: ${extractedFileName}]`;
+    }
+
+    // Debugging alert to confirm file name
+    // alert(fileName);
+
+    // Set the quoted message and parent message ID
+    quotedMessage.textContent = quotedContent;
+    parentMessageIdInput.value = messageId;
+    quotedMessageContainer.classList.remove('d-none');
+
+    // Focus on the textarea
+    messageTextarea.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    messageTextarea.focus();
+}
+
+// Function to clear the quoted message
+function clearQuotedMessage() {
+    const quotedMessageContainer = document.getElementById('quoted-message-container');
+    const quotedMessage = document.getElementById('quoted-message');
+    const parentMessageIdInput = document.getElementById('parent-message-id');
+
+    quotedMessage.textContent = '';
+    parentMessageIdInput.value = '';
+    quotedMessageContainer.classList.add('d-none');
+}
+// Function to scroll to a specific message and highlight it
+function scrollToMessage(messageId) {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    
+    if (messageElement) {
+        // Scroll to the message
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Add the custom highlight class
+        messageElement.classList.add('highlight-light');
+
+        // Remove the highlight after a delay
+     
+    }
+}
+
+// Function to scroll to the last message when the page loads
+window.onload = function() {
+    const messageContainer = document.getElementById('message-container');
+    messageContainer.scrollTop = messageContainer.scrollHeight;  // Scroll to the bottom
+}
+
+
+</script>
+
+
+<script>
+  function showMoreMembers() {
+      document.getElementById('more_members_list').style.display = 'block';
+      document.getElementById('more_members').style.display = 'none';
+  }
+</script>
+
+
+<!-- for mail sending progress bar -->
+
+<script>
+  $(document).ready(function () {
+      $('#createGroupForm').on('submit', function (e) {
+          e.preventDefault(); // Prevent form from submitting the traditional way
+
+          // Check if the number of selected users exceeds 100
+          const selectedUsers = $('input[name="level1_users"]:checked');
+          if (selectedUsers.length > 20) {
+              Swal.fire({
+                  icon: 'warning',
+                  title: 'Limit Exceeded',
+                  text: 'You can only add up to 20 members in a group.',
+              });
+              return; // Stop execution if the limit is exceeded
+          }
+
+          // Show SweetAlert loader
+          Swal.fire({
+              title: 'Creating Group...',
+              text: 'Please wait while we send invitations.',
+              allowOutsideClick: false,
+              didOpen: () => {
+                  Swal.showLoading();
+              }
+          });
+
+          // Send AJAX POST request
+          $.ajax({
+              url: '{% url "create_group" %}', // Update with your view's URL name
+              type: 'POST',
+              data: $(this).serialize(),
+              success: function (response) {
+                  if (response.status === 'success') {
+                      Swal.fire({
+                          icon: 'success',
+                          title: 'Group Created',
+                          text: response.message
+                      }).then(() => {
+                          // Optional: Refresh the page or close the modal
+                          location.reload();
+                      });
+                  } else {
+                      Swal.fire({
+                          icon: 'error',
+                          title: 'Error',
+                          text: response.message
+                      });
+                  }
+              },
+              error: function () {
+                  Swal.fire({
+                      icon: 'error',
+                      title: 'Error',
+                      text: 'An unexpected error occurred or please select at least one user.',
+                  });
+              }
+          });
+      });
+  });
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    const error = "{{ error_message }}";
+    if (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: error,
+        });
+    }
+</script>
+
+
+<style>
+ /* Light highlight background for better readability */
+.highlight-light {
+    background-color: #f8f9fa; /* Light grey background */
+    border: 1px solid #e0e0e0; /* Optional subtle border */
+    transition: background-color 0.3s ease-in-out; /* Smooth transition effect */
+}
+
+
+
+.modal-body {
+    max-height: 400px; /* Adjust this height as per your design */
+    overflow-y: auto;
+}
+
+
+.scrollable-container {
+  max-height: 200px; /* Adjust height as needed */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Custom scrollbar styles */
+.scrollable-container::-webkit-scrollbar {
+  width: 6px; /* Thin scrollbar */
+}
+
+.scrollable-container::-webkit-scrollbar-thumb {
+  background-color: #888; /* Thumb color */
+  border-radius: 4px;
+}
+
+.scrollable-container::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Thumb hover color */
+}
+
+.scrollable-container::-webkit-scrollbar-track {
+  background-color: #f1f1f1; /* Track color */
+}
+
+
+  .select2-container {
+    z-index: 1055; /* Ensure it stays on top of the modal */
+  }
+
+.message-content{
+  width: 240px;
+}
+
+
+.message.sent {
+    text-align: right;
+}
+
+.message.received {
+    text-align: left;
+}
+
+.chat-img.pull-right {
+    float: right;
+}
+
+.chat-img.pull-left {
+    float: left;
+}
+
+.text-end {
+    text-align: right;
+}
+
+.text-start {
+    text-align: left;
+}
+
+.tick-mark {
+    margin-left: 8px;
+}
+
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: 4px;
+    position: absolute;
+    bottom: 100%; /* Show the tooltip above the image */
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+}
+
+
+       /* Styling for the tick mark inside the message */
+       .tick-mark {
+    position: absolute;
+    bottom: 10px;   /* Adjust to position inside the message */
+    right: 10px;    /* Adjust to position inside the message */
+    font-size: 18px; /* Adjust size */
+        /* Change to green for seen status */
+}
+.input-group-text label {
+    margin: 0;
+    color: #6c757d;
+    font-size: 1.2rem;
+}
+.input-group-text:hover label {
+    color: #007bff;
+}
+
+  body{
+    background-color: black;
+  }
+
+.custom-scrollbar {
+    overflow-y: auto;
+    max-height: 600px; /* Adjust based on your container height */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #ccc #f5f5f5; /* Scrollbar color for Firefox */
+}
+
+/* Chrome, Edge, and Safari */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px; /* Width of the scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #ccc; /* Scrollbar thumb color */
+    border-radius: 10px; /* Rounded corners for the thumb */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #aaa; /* Scrollbar thumb hover color */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f5f5f5; /* Scrollbar track color */
+}
+
+
+.chat-message {
+    overflow-y: auto; /* Enable vertical scrolling */
+    max-height: 400px; /* Adjust the height as needed */
+    scrollbar-width: thin; /* Firefox - thin scrollbar */
+    scrollbar-color: #ccc #f5f5f5; /* Firefox - scrollbar colors */
+}
+
+/* Chrome, Edge, Safari */
+.chat-message::-webkit-scrollbar {
+    width: 6px; /* Width of the scrollbar */
+}
+
+.chat-message::-webkit-scrollbar-thumb {
+    background: #ccc; /* Scrollbar thumb color */
+    border-radius: 10px; /* Rounded corners for the thumb */
+}
+
+.chat-message::-webkit-scrollbar-thumb:hover {
+    background: #aaa; /* Scrollbar thumb hover color */
+}
+
+.chat-message::-webkit-scrollbar-track {
+    background: #f5f5f5; /* Scrollbar track color */
+}
+
+
+body {
+  padding-top: 0;
+  font-size: 12px;
+  color: #777;
+  background: #f1f5fc;
+  font-family: 'Open Sans',sans-serif;
+  margin-top:20px;
+}
+
+.bg-white {
+  background-color: #fff;
+}
+
+.friend-list {
+  list-style: none;
+margin-left: -40px;
+}
+
+.friend-list li {
+  border-bottom: 1px solid #eee;
+}
+
+.friend-list li a img {
+  float: left;
+  width: 45px;
+  height: 45px;
+  margin-right: 10px;
+}
+
+ .friend-list li a {
+  position: relative;
+  display: block;
+  padding: 10px;
+  transition: all .2s ease;
+  -webkit-transition: all .2s ease;
+  -moz-transition: all .2s ease;
+  -ms-transition: all .2s ease;
+  -o-transition: all .2s ease;
+}
+
+.friend-list li.active a {
+  background-color: #f1f5fc;
+}
+
+.friend-list li a .friend-name, 
+.friend-list li a .friend-name:hover {
+  color: #777;
+}
+
+.friend-list li a .last-message {
+  width: 65%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.friend-list li a .time {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+}
+
+small, .small {
+  font-size: 85%;
+}
+
+.friend-list li a .chat-alert {
+  position: absolute;
+  right: 8px;
+  top: 27px;
+  font-size: 10px;
+  padding: 3px 5px;
+}
+
+.chat-message {
+  padding: 60px 20px 115px;
+}
+
+.chat {
+    list-style: none;
+    margin: 0;
+}
+
+.chat-message{
+    background: #f1f5fc;  
+}
+
+.chat li img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50em;
+  -moz-border-radius: 50em;
+  -webkit-border-radius: 50em;
+}
+
+img {
+  max-width: 100%;
+}
+
+.chat-body {
+  padding-bottom: 20px;
+}
+
+.chat li.left .chat-body {
+  margin-left: 70px;
+  background-color: #fff;
+}
+
+.chat li .chat-body {
+  position: relative;
+  font-size: 11px;
+  padding: 10px;
+  border: 1px solid #f1f5fc;
+  box-shadow: 0 1px 1px rgba(0,0,0,.05);
+  -moz-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+  -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+}
+
+.chat li .chat-body .header {
+  padding-bottom: 5px;
+  border-bottom: 1px solid #f1f5fc;
+}
+
+.chat li .chat-body p {
+  margin: 0;
+}
+
+.chat li.left .chat-body:before {
+  position: absolute;
+  top: 10px;
+  left: -8px;
+  display: inline-block;
+  background: #fff;
+  width: 16px;
+  height: 16px;
+  border-top: 1px solid #f1f5fc;
+  border-left: 1px solid #f1f5fc;
+  content: '';
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+}
+
+.chat li.right .chat-body:before {
+  position: absolute;
+  top: 10px;
+  right: -8px;
+  display: inline-block;
+  background: #fff;
+  width: 16px;
+  height: 16px;
+  border-top: 1px solid #f1f5fc;
+  border-right: 1px solid #f1f5fc;
+  content: '';
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+}
+
+.chat li {
+  margin: 15px 0;
+}
+
+.chat li.right .chat-body {
+  margin-right: 70px;
+  background-color: #fff;
+}
+
+.chat-box {
+/*
+  position: fixed;
+  bottom: 0;
+  left: 444px;
+  right: 0;
+*/
+  padding: 15px;
+  border-top: 1px solid #eee;
+  transition: all .5s ease;
+  -webkit-transition: all .5s ease;
+  -moz-transition: all .5s ease;
+  -ms-transition: all .5s ease;
+  -o-transition: all .5s ease;
+}
+
+.primary-font {
+  color: #3c8dbc;
+}
+
+a:hover, a:active, a:focus {
+  text-decoration: none;
+  outline: 0;
+}
+.modal-body {
+    max-height: 400px; /* Adjust the max height as needed */
+    overflow-y: auto;  /* Enable vertical scroll */
+    padding-right: 15px; /* Prevent scrollbar overlap */
+}
+
+</style>
+{% endblock content %}
+
+
+
+

@@ -1,0 +1,249 @@
+<div class="group-list mt-3">
+    <ul class="friend-list mt-3" id="groupList">
+        {% for group in allgroups %}
+            <li class="active bounceInDown" data-group-id="{{ group.id }}">
+                <a href="{% url 'group_detail' group.id %}" class="clearfix">
+                    <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ group.name }}" 
+                         alt="Group Profile" class="img-fluid rounded-circle" style="width: 40px; height: 40px;">
+                    <div class="friend-name">
+                        <strong>{{ group.name }}</strong>
+                        <span class="badge badge-warning ml-1 text-primary" style="display: none; font-size: 14px;">0</span>
+                    </div>
+                    <div class="last-message text-muted">
+                        {% if group.last_message %}
+                            <strong>{{ group.last_message_sender }}:</strong> {{ group.last_message }}
+                        {% endif %}
+                    </div>
+                    <small class="time text-muted">
+                        {% if group.last_message_time %}
+                            {{ group.last_message_time|date:"d M, Y H:i" }}
+                        {% endif %}
+                    </small>
+                   
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+    
+</div>
+
+ <div class="group-list mt-3">
+    <ul class="friend-list mt-3" id="groupList">
+     {% for group in groupname1 %}
+         <li class="active bounceInDown">
+             <a href="{% url 'group_detail' group.id %}" class="clearfix">
+                 <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ group.name }}" 
+                      alt="Group Profile" class="img-fluid rounded-circle" style="width: 40px; height: 40px;">
+ 
+                 <div class="friend-name">
+                     <strong>{{ group.name }}</strong>
+                 </div>
+                 <div class="last-message text-muted">
+                     Created by: {{ group.created_by.username }}
+                 </div>
+                 <small class="time text-muted">
+                     {{ group.created_at|date:"d M, Y H:i" }}
+                 </small>
+             </a>
+         </li>
+     {% empty %}
+         <!-- <p>No groups available</p> -->
+     {% endfor %}
+ </ul>
+ </div>
+ 
+ 
+<!-- 
+ <div class="group-list mt-3">
+    <ul class="friend-list mt-3" id="groupList">
+     {% for group in groupname2 %}
+         <li class="active bounceInDown">
+             <a href="{% url 'group_detail' group.id %}" class="clearfix">
+                 <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ group.name }}" 
+                      alt="Group Profile" class="img-fluid rounded-circle" style="width: 40px; height: 40px;">
+ 
+                 <div class="friend-name">
+                     <strong>{{ group.name }}</strong>
+                 </div>
+                 <div class="last-message text-muted">
+                     Created by: {{ group.created_by.username }}
+                 </div>
+                 <small class="time text-muted">
+                     {{ group.created_at|date:"d M, Y H:i" }}
+                 </small>
+             </a>
+         </li>
+     {% empty %}
+     {% endfor %}
+ </ul>
+ </div> -->
+ 
+
+
+
+<div class="group-list mt-3">
+    <ul class="friend-list mt-3" id="groupList">
+     {% for group in allgroupss %}
+         <li class="active bounceInDown">
+            <a href="{% url 'group_detail' group.id %}" class="clearfix">
+                <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ group.name }}" 
+                      alt="Group Profile" class="img-fluid rounded-circle" style="width: 40px; height: 40px;">
+ 
+                 <div class="friend-name">
+                     <strong>{{ group.name }}</strong>
+                 </div>
+                 <div class="last-message text-muted">
+                     Created by: {{ group.created_by.username }}
+                 </div>
+                 <small class="time text-muted">
+                     {{ group.created_at|date:"d M, Y H:i" }}
+                 </small>
+             </a>
+         </li>
+     {% empty %}
+     <!-- <p>No groups available</p> -->
+
+     {% endfor %}
+ </ul>
+ 
+ </div>
+ 
+ {% if users %}
+<ul class="friend-list mt-3" id="userList">
+    {% for user in users %}
+        <li class="active bounceInDown" data-user-id="{{ user.id }}">
+            <a href="{% url 'send_message' user.id %}" class="clearfix">
+                <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ user.username|default:user.email }}" 
+                     alt="Profile" class="img-fluid rounded-circle" style="width: 40px; height: 40px;">
+
+                <div class="friend-name">
+                    <strong>{{ user.username }}</strong>
+                    <span class="notification-count badge badge-warning ml-1 text-primary" 
+                          style="display: none; font-size: 14px;">0</span>
+                </div>
+                <div class="last-message text-muted">
+                    {% if user.last_message_content %}
+                         {{ user.last_message_content }}
+                    {% else %}
+                        No recent message
+                    {% endif %}
+                </div>
+                <small class="time text-muted">
+                    {% if user.last_message_time %}
+                        {{ user.last_message_time|date:"d M, Y H:i" }}
+                    {% else %}
+                        No messages yet
+                    {% endif %}
+                </small>
+            </a>
+        </li>
+    {% empty %}
+        <h5 class="text-center">No users found.</h5>
+    {% endfor %}
+</ul>
+{% endif %}
+
+ 
+
+{% if groupschatname %}
+<div class="group-list mt-3">
+    <ul class="friend-list mt-3" id="groupList">
+
+    {% for group in groupschatname %}
+    <li class="active bounceInDown" data-group-id="{{ group.id }}">
+        <a href="{% url 'group_detail' group.id %}" class="clearfix">
+            <img src="https://api.dicebear.com/6.x/initials/svg?seed={{ group.name }}" 
+                 alt="Group Profile" class="img-fluid rounded-circle" style="width: 40px; height: 40px;">    <div class="friend-name">
+                    <strong>{{ group.name }}</strong>
+                    <span class="notification-count badge badge-warning ml-1 text-primary" style="display: none; font-size: 14px;">0</span>
+                </div>
+                <div class="last-message text-muted">
+                    {% if group.last_message %}
+                        <strong>{{ group.last_message_sender }}:</strong> {{ group.last_message }}
+                    {% endif %}
+                </div>
+                <small class="time text-muted">
+                    {% if group.last_message_time %}
+                        {{ group.last_message_time|date:"d M, Y H:i" }}
+                    {% endif %}
+                </small>
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Function to fetch notification counts
+    function fetchNotificationCounts() {
+        fetch("{% url 'get_notifications' %}")  // Replace 'get_notifications' with your actual URL
+            .then(response => response.json())
+            .then(data => {
+                if (data.notifications) {
+                    data.notifications.forEach(notification => {
+                        if (notification.type === 'user') {
+                            const userListItem = document.querySelector(`li[data-user-id="${notification.user_id}"]`);
+                            if (userListItem) {
+                                const notificationCountElem = userListItem.querySelector(".notification-count");
+                                if (notification.unread_count > 0) {
+                                    notificationCountElem.textContent = notification.unread_count;
+                                    notificationCountElem.style.display = "inline";
+                                } else {
+                                    notificationCountElem.style.display = "none";
+                                }
+                            }
+                        } else if (notification.type === 'group') {
+                            const groupListItem = document.querySelector(`li[data-group-id="${notification.group_id}"]`);
+                            if (groupListItem) {
+                                const notificationCountElem = groupListItem.querySelector(".notification-count");
+                                if (notification.unread_count > 0) {
+                                    notificationCountElem.textContent = notification.unread_count;
+                                    notificationCountElem.style.display = "inline";
+                                } else {
+                                    notificationCountElem.style.display = "none";
+                                }
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error("Error fetching notifications:", error));
+    }
+
+    // Fetch notification counts on page load and periodically
+    fetchNotificationCounts();
+    setInterval(fetchNotificationCounts, 10000);
+
+    // When a user clicks on a group, mark the notifications as read
+    const groupListItems = document.querySelectorAll('.group-list li[data-group-id]');
+    groupListItems.forEach(groupItem => {
+        groupItem.addEventListener('click', function () {
+            const groupId = groupItem.getAttribute('data-group-id');
+            // Send a request to mark notifications as read
+            fetch("{% url 'mark_notifications_as_read' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify({ group_id: groupId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the notification count after marking as read
+                    const notificationCountElem = groupItem.querySelector(".notification-count");
+                    notificationCountElem.textContent = '0';  // Set it to 0 after marking as read
+                    notificationCountElem.style.display = "none";  // Hide the count
+                }
+            })
+            .catch(error => console.error("Error marking notifications as read:", error));
+        });
+    });
+});
+</script>

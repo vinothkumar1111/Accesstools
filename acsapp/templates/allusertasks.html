@@ -1,0 +1,403 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+<body>
+  <main id="main" class="main">
+    <div class="pagetitle">
+      <h1>All Tasks</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+          <li class="breadcrumb-item active">All Tasks</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-12">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">All Tasks List</h5>
+              <form method="POST" class="mb-3">
+                {% csrf_token %}
+ 
+    <div class="d-flex align-items-center">
+      <select name="status" id="status" class="form-control-sm me-2">
+        <option selected disabled value="">Select Status</option>
+                        <option value="Not Started" {% if selected_status == 'Not Started' %}selected{% endif %}>Not Started</option>
+                        <option value="Working" {% if selected_status == 'Working' %}selected{% endif %}>Working</option>
+                        <option value="Pending Review" {% if selected_status == 'Pending Review' %}selected{% endif %}>Pending Review</option>
+                        <option value="Completed" {% if selected_status == 'Completed' %}selected{% endif %}>Completed</option>
+                        <option value="Cancelled" {% if selected_status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                        <option value="Rework" {% if selected_status == 'Rework' %}selected{% endif %}>Rework</option>
+                    </select>
+                    <input type="submit" class="btn btn-primary me-2" value="Filter">
+                </div>
+            </form>
+            <button id="generatePdf" class="btn btn-success me-2">PDF</button>
+                                <button id="generateCsv" class="btn btn-success">CSV</button>
+              <div class="table-responsive">
+              <table class="table datatable" id="userTable">
+                <thead>
+                  <tr class="text-nowrap">
+                    <th>Projectname</th>
+                    <th class="text-nowrap">Task name</th>
+                    <th>Priority</th>
+                    <th class="text-nowrap">Assigned To</th> <!-- New column for the user working on the task -->
+                    <th>Startdate</th>
+                    <th>Enddate</th>
+                    <th>Status</th>
+                    <th>Comment</th>
+                    <th class="hide-in-table text-nowrap">Updated as Completed</th> <!-- Hidden in table -->
+                    <th class="hide-in-table">Updated as Working</th> <!-- Hidden in table -->
+  
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for task in tasks %}
+                    <tr class="text-nowrap">
+                      <td>{{ task.project.projectname }}</td> <!-- Project name -->
+                      <td>{{ task.taskname }}</td> <!-- Task name -->
+                      <td>{{ task.priority }}</td> <!-- Task priority -->
+                      <td>{{ task.user.username }}</td> <!-- User who assigned the project -->
+                      <td>{{ task.from_date }}</td> <!-- Start date -->
+                      <td>{{ task.to_date }}</td> <!-- End date -->
+                      <td>
+                        <form method="POST" action="{% url 'card_update_task_status' task.id %}">
+                            {% csrf_token %}
+                            <select style="width: 120px;" name="status" onchange="this.className = this.options[this.selectedIndex].className; this.form.submit();" 
+                            class="form-control form-control-sm
+                                {% if task.status == 'Not Started' %}text-danger{% elif task.status == 'Working' %}text-primary{% elif task.status == 'Completed' %}text-success{% elif task.status == 'Pending Review' %}text-warning{% elif task.status == 'Cancelled' %}text-muted{% elif task.status == 'Rework' %}text-info{% endif %}">
+                                
+                                <option value="Not Started" class="text-danger" {% if task.status == 'Not Started' %}selected{% endif %}>Not Started</option>
+                                <option value="Working" class="text-primary" {% if task.status == 'Working' %}selected{% endif %}>Working</option>
+                                <option value="Pending Review" class="text-warning" {% if task.status == 'Pending Review' %}selected{% endif %}>Pending Review</option>
+                                <option value="Completed" class="text-success" {% if task.status == 'Completed' %}selected{% endif %}>Completed</option>
+                                <option value="Cancelled" class="text-muted" {% if task.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                <option value="Rework" class="text-info" {% if task.status == 'Rework' %}selected{% endif %}>Rework</option>
+                            </select>
+                        </form>
+                    </td>
+                    
+
+                      <td>
+                        <!-- Add Comment Button (Opens modal) -->
+                        <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" 
+                           data-bs-target="#commentModal" 
+                           data-task-id="{{ task.id }}">
+                          Add Comment
+                        </a>
+                      </td>
+                      <td class="hide-in-table">{{ task.updated_as_completed }}</td> <!-- Hidden in table -->
+                      <td class="hide-in-table">{{ task.updated_as_working }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="7">No tasks available.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  
+
+  <!-- Include the same comment modal here -->
+ <!-- Comment Modal -->
+<div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="commentModalLabel">Comments</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Previous Comments -->
+        <div id="previousComments">
+          <h6>Previous Comments:</h6>
+          <div id="commentsList" class="mb-3">
+            <!-- Comments will be appended here -->
+            <p>No comments yet.</p> <!-- Default message if there are no comments -->
+          </div>
+        </div>
+
+        <!-- Comment Textarea -->
+        <textarea id="commentText" class="form-control" rows="4" placeholder="Enter your comment here..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="submitComment()">Add Comment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+  // Fetch and display comments when modal is opened
+document.getElementById('commentModal').addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget;  // Button that triggered the modal
+    const taskId = button.getAttribute('data-task-id');  // Extract the task ID from the data-task-id attribute
+
+    // Store the taskId globally or in a hidden field inside the modal
+    document.getElementById('commentModal').setAttribute('data-task-id', taskId);
+
+    // Fetch comments for the selected task
+    fetch(`/get-comments/${taskId}/`)
+      .then(response => response.json())
+      .then(data => {
+        const commentsList = document.getElementById('commentsList');
+        commentsList.innerHTML = '';  // Clear the list
+
+        if (data.success && data.comments.length > 0) {
+          data.comments.forEach(comment => {
+            const commentElement = document.createElement('p');
+            commentElement.innerHTML = `<strong>${comment.username}</strong>: ${comment.text} <small>(${comment.timestamp})</small>`;
+            commentsList.appendChild(commentElement);
+          });
+        } else {
+          commentsList.innerHTML = '<p>No comments yet.</p>';
+        }
+      })
+      .catch(error => console.error('Error:', error));
+});
+
+// Submit a new comment via Ajax
+function submitComment() {
+    const taskId = document.getElementById('commentModal').getAttribute('data-task-id');  // Get the task ID from the modal
+    const comment = document.getElementById('commentText').value;
+
+    if (!comment) {
+      alert("Comment cannot be empty.");
+      return;
+    }
+
+    fetch(`/add-comment/${taskId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}',
+      },
+      body: JSON.stringify({ comment: comment })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Append the new comment to the previous comments section
+        const commentSection = document.getElementById('commentsList');
+        const newComment = document.createElement('p');
+        newComment.innerHTML = `<strong>${data.username}</strong>: ${data.comment} <small>(${data.timestamp})</small>`;
+        commentSection.appendChild(newComment);
+
+        // Clear the comment input
+        document.getElementById('commentText').value = '';
+      } else {
+        alert("Failed to add comment: " + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+}
+
+</script>
+<script>
+  document.getElementById('generatePdf').addEventListener('click', function () {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+ 
+      // Get table headers
+      const table = document.getElementById('userTable');
+      const headers = [];
+      let commentColumnIndex = -1; // Variable to identify the "Comment" column
+ 
+      table.querySelectorAll('thead th').forEach((header, index) => {
+          const headerText = header.innerText.trim();
+          if (headerText.toLowerCase() === 'comment') {
+              commentColumnIndex = index; // Mark the "Comment" column
+          } else {
+              headers.push(headerText); // Include all other headers
+          }
+      });
+ 
+      // Process table rows
+      const rows = [];
+      table.querySelectorAll('tbody tr').forEach(row => {
+          const rowData = [];
+          row.querySelectorAll('td').forEach((cell, index) => {
+              // Skip the "Comment" column
+              if (index === commentColumnIndex) {
+                  return;
+              }
+ 
+              // Check if the cell contains a select dropdown
+              const selectElement = cell.querySelector('select');
+              if (selectElement) {
+                  // Get the selected option's text
+                  const selectedOption = selectElement.options[selectElement.selectedIndex].text;
+                  rowData.push(selectedOption.trim());
+              } else {
+                  // For other cells, just take the text content
+                  rowData.push(cell.innerText.trim());
+              }
+          });
+          rows.push(rowData);
+      });
+ 
+      // Use AutoTable to generate the PDF
+      pdf.autoTable({
+          head: [headers], // Table headers (excluding "Comment")
+          body: rows,      // Table rows (excluding "Comment" column)
+          startY: 10,      // Starting Y position
+      });
+ 
+      // Save the PDF
+      pdf.save('table_data.pdf');
+  });
+</script>
+ 
+<script>
+  document.getElementById('generateCsv').addEventListener('click', function () {
+    const table = document.getElementById('userTable');
+    const headers = [];
+    const rows = [];
+    let descriptionColumnIndex = -1;
+ 
+    // Extract headers and identify the "Comment" column
+    table.querySelectorAll('thead th').forEach((header, index) => {
+        const headerText = header.innerText.trim();
+        if (headerText.toLowerCase() === 'comment') {
+            descriptionColumnIndex = index; // Mark the "Comment" column
+        } else {
+            headers.push(headerText); // Include all other headers
+        }
+    });
+ 
+    // Collect table data, excluding the "Comment" column
+    table.querySelectorAll('tbody tr').forEach(row => {
+        const rowData = [];
+        row.querySelectorAll('td').forEach((cell, index) => {
+            if (index === descriptionColumnIndex) return; // Skip the "Comment" column
+ 
+            // Check if the cell contains a select dropdown
+            const selectElement = cell.querySelector('select');
+            let cellData = "";
+            if (selectElement) {
+                // Get the selected option's text
+                cellData = selectElement.options[selectElement.selectedIndex].text.trim();
+            } else {
+                // For other cells, take the text content
+                cellData = cell.innerText.trim();
+            }
+ 
+            // Escape commas and wrap in double quotes if necessary
+            if (cellData.includes(',')) {
+                cellData = `"${cellData}"`;
+            }
+            rowData.push(cellData);
+        });
+        rows.push(rowData);
+    });
+ 
+    // Check row and header lengths
+    rows.forEach(row => {
+        while (row.length < headers.length) {
+            row.push(''); // Fill missing columns with empty strings
+        }
+    });
+ 
+    // Convert data to CSV format
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+ 
+    // Create a downloadable link
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'table_data.csv';
+ 
+    // Trigger the download
+    link.click();
+ 
+    // Cleanup
+    URL.revokeObjectURL(url);
+  });
+</script>
+<!-- jsPDF Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- jsPDF AutoTable Plugin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+  document.getElementById('generateCsv').addEventListener('click', function () {
+  const table = document.getElementById('userTable');
+  const headers = [];
+  const rows = [];
+ 
+  // Extract headers (table column names), excluding "Description"
+  table.querySelectorAll('thead th').forEach((header, index) => {
+      const headerText = header.innerText.trim();
+      if (headerText !== "Description") {
+          headers.push({ text: headerText, index: index });
+      }
+  });
+ 
+  // Collect table data, skipping the "Description" column
+  table.querySelectorAll('tbody tr').forEach(row => {
+      const rowData = [];
+      row.querySelectorAll('td').forEach((cell, cellIndex) => {
+          // Only include columns that are not "Description"
+          if (headers.some(header => header.index === cellIndex)) {
+              const selectElement = cell.querySelector('select');
+              let cellData = "";
+ 
+              // If the cell contains a select dropdown, get the selected option's text
+              if (selectElement) {
+                  cellData = selectElement.options[selectElement.selectedIndex].text.trim();
+              } else {
+                  // Otherwise, use the cell's text content
+                  cellData = cell.innerText.trim();
+              }
+ 
+              // Escape commas in data
+              if (cellData.includes(',')) {
+                  cellData = `"${cellData}"`;
+              }
+              rowData.push(cellData);
+          }
+      });
+      rows.push(rowData);
+  });
+ 
+  // Convert data to CSV format
+  const csvContent = [headers.map(h => h.text).join(','), ...rows.map(row => row.join(','))].join('\n');
+ 
+  // Create a downloadable link for the CSV file
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'table_data.csv';
+ 
+  // Trigger the download
+  link.click();
+ 
+  // Cleanup
+  URL.revokeObjectURL(url);
+});
+ 
+ 
+</script>
+
+</body>
+{% endblock content %}

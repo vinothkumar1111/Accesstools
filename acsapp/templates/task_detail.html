@@ -1,0 +1,776 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<body>
+<!-- Include Select2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Include jQuery and Select2 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+
+
+
+ 
+
+  <main id="main" class="main">
+
+    <div class="pagetitle">
+      <h1>Projects</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+          <li class="breadcrumb-item">Tables</li>
+          <li class="breadcrumb-item active">Data</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-12">
+                        
+           <!-- Button to toggle visibility of the card -->
+<button id="projectbtn" class="btn btn-primary mb-3">Create Task</button>
+
+<!-- Initially hidden card -->
+<div class="col-lg-12" id="projectCard" style="display: none;">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Task Creation</h5>
+   
+      <!-- <p>For custom Bootstrap form validation messages, you’ll need to add the <code>novalidate</code> boolean attribute to your <code>&lt;form&gt;</code>. This disables the browser default feedback tooltips, but still provides access to the form validation APIs in JavaScript.</p> -->
+      <!-- Custom Styled Validation -->
+
+
+      <form class="row g-3 needs-validation" id="createtask" method="post" action="{% url 'create_task' selected_project.id %}" novalidate>
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label for="taskname" class="form-label">Task name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="taskname" name="taskname" required>
+            <div class="invalid-feedback">Task name is required.</div>
+        </div>
+    
+        <div class="col-md-6">
+            <label for="priority" class="form-label">Priority <span class="text-danger">*</span></label>
+            <select class="form-select" id="priority" name="priority" required>
+                <option selected disabled value="">Choose...</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Urgent">Urgent</option>
+            </select>
+            <div class="invalid-feedback">Please select a priority level.</div>
+        </div>
+    
+        <div class="col-md-6">
+            <label for="fromDate" class="form-label">From Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="fromDate" name="fromdate" required>
+            <div class="invalid-feedback">Please provide a start date.</div>
+        </div>
+    
+        <div class="col-md-6">
+            <label for="toDate" class="form-label">To Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" id="toDate" name="todate" required>
+            <div class="invalid-feedback">Please provide an end date.</div>
+        </div>
+    
+        <div class="col-md-12">
+            <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+            <div class="invalid-feedback">Please enter a description for the task.</div>
+        </div>
+    
+        <div class="col-md-12" id="selected_users_field">
+            <label for="selected_users" class="form-label">Select Users</label>
+            <select class="select2" id="selected_users" name="selected_users" multiple="multiple" required>
+                {% for user in available_users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">Please select at least one user.</div>
+        </div>
+    
+        <div class="col-md-12">
+            <input type="checkbox" id="is_child_checkbox" name="is_child" onclick="toggleParentTaskField()">
+            <label for="is_child_checkbox" class="form-label">Is Child</label>
+        </div>
+    
+        <div class="col-md-12" id="parent_task_field" style="display: none;">
+            <label for="parent_task" class="form-label">Select Parent Task</label>
+            <select class="form-select select2" id="parent_task" name="parent_task">
+                <option value="">Select Task</option>
+                {% for task in all_tasks %}
+                    <option value="{{ task.id }}">
+                        {{ task.taskname }} - ({{ task.user.username }}) - ({{ task.created_at|date:"Y-m-d" }})
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">Please select a parent task if "Is Child" is checked.</div>
+        </div>
+    
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">Assign</button>
+        </div>
+    </form>
+    
+    <script>
+        function toggleParentTaskField() {
+            const checkbox = document.getElementById('is_child_checkbox');
+            const parentTaskField = document.getElementById('parent_task_field');
+            if (checkbox.checked) {
+                parentTaskField.style.display = "block";
+            } else {
+                parentTaskField.style.display = "none";
+            }
+        }
+    
+        function validateForm(event) {
+            let isValid = true;
+    
+            // Validate task name
+            const taskName = document.getElementById('taskname');
+            if (!taskName.value.trim()) {
+                taskName.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                taskName.classList.remove('is-invalid');
+            }
+    
+            // Validate priority
+            const priority = document.getElementById('priority');
+            if (!priority.value) {
+                priority.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                priority.classList.remove('is-invalid');
+            }
+    
+            // Validate date fields
+            const fromDate = document.getElementById('fromDate');
+            const toDate = document.getElementById('toDate');
+            if (!fromDate.value) {
+                fromDate.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                fromDate.classList.remove('is-invalid');
+            }
+            if (!toDate.value) {
+                toDate.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                toDate.classList.remove('is-invalid');
+            }
+    
+            // Validate description
+            const description = document.getElementById('description');
+            if (!description.value.trim()) {
+                description.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                description.classList.remove('is-invalid');
+            }
+    
+            // Validate selected users
+            const selectedUsers = document.getElementById('selected_users');
+            if (selectedUsers.selectedOptions.length === 0) {
+                selectedUsers.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                selectedUsers.classList.remove('is-invalid');
+            }
+    
+            // Validate parent task if "Is Child" is checked
+            const isChildCheckbox = document.getElementById('is_child_checkbox');
+            const parentTask = document.getElementById('parent_task');
+            if (isChildCheckbox.checked && !parentTask.value) {
+                parentTask.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                parentTask.classList.remove('is-invalid');
+            }
+    
+            // Prevent form submission if validation fails
+            if (!isValid) {
+                event.preventDefault();
+            }
+        }
+    
+        document.getElementById('createtask').addEventListener('submit', validateForm);
+    </script>
+    
+        
+    
+    
+    </div>
+  </div>
+</div>
+
+
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">{{ selected_project.projectname }}</h5>
+
+              <div class="table-responsive">
+              <table class="table datatable"  id="userTable">
+                <thead>
+                    <tr>
+                        <th class="text-nowrap">Task Name</th>
+                        <th>Priority</th>
+                        <th class="text-nowrap">Assigned To</th>
+                        <th class="text-nowrap">From Date</th>
+                        <th class="text-nowrap">To Date</th>
+                        <th>Status</th>
+                        <th>Description</th> <!-- New Column -->
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody class="text-nowrap">
+                    {% if tasks %}
+                        {% for task in tasks %}
+                        <tr>
+                            <td>{{ task.taskname }}</td>
+            
+                            <td>
+                                <span
+                                {% if task.priority == "High" or task.priority == "Urgent" %}
+                                class="text-danger"
+                                {% elif task.priority == "Medium" %}
+                                class="text-primary"
+                                {% elif task.priority == "Low" %}
+                                class="text-secondary"
+                                {% endif %}>
+                                {{ task.priority }}
+                                </span>
+                            </td>
+                            <td>{{ task.user.username }}</td>
+            
+                            <td class="text-nowrap">{{ task.from_date }}</td>
+                            <td class="text-nowrap">{{ task.to_date }}</td>
+                            <td class="text-nowrap">{{ task.status }}</td>
+            
+                            <!-- New Description Column -->
+                            <td class="text-nowrap">
+                              {{ task.description|slice:":6" }}... 
+                              <a href="#" class="read-more" data-bs-toggle="modal" data-bs-target="#descriptionModal" data-description="{{ task.description }}">
+                                  Read More
+                              </a>
+                          </td>
+                          
+            
+                            <td>
+                                <div class="filter">
+                                    <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
+                                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                        <li>
+                                            <a class="dropdown-item edit-link" href="#"
+                                               data-bs-toggle="modal"
+                                               data-id="{{ task.id }}"
+                                               data-taskname="{{ task.taskname }}"
+                                               data-priority="{{ task.priority }}"
+                                               data-fromdate="{{ task.from_date|date:'Y-m-d' }}"
+                                               data-todate="{{ task.to_date|date:'Y-m-d' }}"
+                                               data-description="{{ task.description }}"> <!-- Include description in edit -->
+                                                Edit
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item delete-link" href="#" data-id="{{ task.id }}" data-taskname="{{ task.taskname }}">
+                                                Delete
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7">No tasks available for this project.</td> <!-- Updated colspan -->
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+          </div>
+            
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal for Full Description -->
+<div class="modal fade" id="descriptionModal" tabindex="-1" aria-labelledby="descriptionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="descriptionModalLabel">Full Description</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="fullDescription"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const readMoreLinks = document.querySelectorAll('.read-more');
+
+    readMoreLinks.forEach(link => {
+      link.addEventListener('click', function () {
+        const description = this.getAttribute('data-description');  // Get the full description from data attribute
+        const descriptionModal = document.getElementById('fullDescription');
+        descriptionModal.textContent = description;  // Set the modal content
+      });
+    });
+  });
+</script>
+
+ <!-- Modal for Editing Task -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="editTaskForm" method="post" action="{% url 'update_task' 0 %}"> <!-- Placeholder for task ID -->
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="editTaskName" class="form-label">Task Name</label>
+            <input type="text" class="form-control" id="editTaskName" name="taskname" required>
+          </div>
+          <div class="mb-3">
+            <label for="editPriority" class="form-label">Priority</label>
+            <select class="form-select" id="editPriority" name="priority" required>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="editFromDate" class="form-label">From Date</label>
+            <input type="date" class="form-control" id="editFromDate" name="fromdate" required>
+          </div>
+          <div class="mb-3">
+            <label for="editToDate" class="form-label">To Date</label>
+            <input type="date" class="form-control" id="editToDate" name="todate" required>
+          </div>
+          <div class="mb-3">
+            <label for="editDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="editDescription" name="description" rows="3" required></textarea>
+          </div>
+          <input type="hidden" id="editTaskId" name="task_id"> <!-- Hidden input for task ID -->
+          <button type="submit" class="btn btn-primary">Update Task</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+  <!-- Script to Toggle Form and Initialize Select2 -->
+  <script>
+    document.getElementById("projectbtn").addEventListener("click", function() {
+        var card = document.getElementById("projectCard");
+        var button = document.getElementById("projectbtn");
+
+        // Toggle visibility
+        if (card.style.display === "none" || card.style.display === "") {
+            card.style.display = "block";
+            button.textContent = "Close Task"; // Change button text to "Close Task"
+
+            // Reinitialize Select2 for the now-visible dropdown
+            $('#selected_users').select2({
+                placeholder: "Select users", // Placeholder text
+                allowClear: true,           // Allow clearing selection
+                dropdownParent: $('#projectCard'), // Render within the card
+                width: '100%'               // Set width to full container width
+            });
+        } else {
+            card.style.display = "none";
+            button.textContent = "Create Task"; // Change button text back to "Create Task"
+        }
+    });
+
+    // Initialize Select2 on page load for all select elements
+    $(document).ready(function() {
+        $('.select2').select2({
+            placeholder: "Select users", // Placeholder text
+            allowClear: true,           // Allow clearing selection
+            width: '100%'               // Set width to full container width
+        });
+    });
+</script>
+
+
+  <script>
+
+  
+  document.addEventListener('DOMContentLoaded', function () {
+    var editButtons = document.querySelectorAll('[data-bs-target="#editProjectModal"]');
+    
+    editButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            var projectId = button.getAttribute('data-id');
+            var projectName = button.getAttribute('data-projectname');
+            var taskName = button.getAttribute('data-taskname');
+            var priority = button.getAttribute('data-priority');
+            var fromDate = button.getAttribute('data-fromdate');
+            var toDate = button.getAttribute('data-todate');
+
+            // Set modal fields
+            document.getElementById('editProjectId').value = projectId;
+            document.getElementById('editProjectName').value = projectName;
+            document.getElementById('editTaskName').value = taskName;
+            document.getElementById('editPriority').value = priority;
+            document.getElementById('editFromDate').value = fromDate;
+            document.getElementById('editToDate').value = toDate;
+
+            // Dynamically set the form action URL
+            var form = document.getElementById('editProjectForm');
+            form.action = '/project/edit/' + projectId + '/';
+        });
+    });
+});
+
+</script>
+
+<!-- SweetAlert JavaScript -->
+<script>
+  // Function to get CSRF token from cookies
+function getCSRFToken() {
+    let csrfToken = null;
+    const cookies = document.cookie.split(';');
+    cookies.forEach(cookie => {
+        const parts = cookie.trim().split('=');
+        if (parts[0] === 'csrftoken') {
+            csrfToken = decodeURIComponent(parts[1]);
+        }
+    });
+    return csrfToken;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const deleteLinks = document.querySelectorAll('.delete-link');
+
+    deleteLinks.forEach(link => {
+        link.addEventListener('click', function (event) {
+            event.preventDefault();  // Prevent default link behavior
+
+            const taskId = this.getAttribute('data-id');
+            const taskName = this.getAttribute('data-taskname');
+
+            // Show SweetAlert confirmation
+            Swal.fire({
+                title: `Are you sure you want to delete task "${taskName}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, cancel!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Send delete request via JavaScript
+                    fetch(`/delete_task/${taskId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCSRFToken()  // Get CSRF token from cookies
+                        },
+                    }).then(response => {
+                        if (response.ok) {
+                            Swal.fire(
+                                'Deleted!',
+                                'Your task has been deleted.',
+                                'success'
+                            ).then(() => {
+                                location.reload();  // Reload the page after deletion
+                            });
+                        } else {
+                            Swal.fire('Error!', 'There was a problem deleting the task.', 'error');
+                        }
+                    });
+                }
+            });
+        });
+    });
+});
+
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var fromDateInput = document.getElementById('fromDate');
+    var toDateInput = document.getElementById('toDate');
+    var form = fromDateInput.closest('form');
+
+    function validateDates() {
+      var fromDate = new Date(fromDateInput.value);
+      var toDate = new Date(toDateInput.value);
+
+      if (fromDate && toDate && toDate < fromDate) {
+        toDateInput.setCustomValidity('The "To Date" must be the same as or greater than the "From Date".');
+      } else {
+        toDateInput.setCustomValidity('');
+      }
+    }
+
+    fromDateInput.addEventListener('change', validateDates);
+    toDateInput.addEventListener('change', validateDates);
+
+    form.addEventListener('submit', function(event) {
+      validateDates();
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+  });
+</script>
+
+
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+  const editLinks = document.querySelectorAll('.edit-link');
+  const editTaskModal = new bootstrap.Modal(document.getElementById('editTaskModal'));
+
+  editLinks.forEach(link => {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      const taskId = this.getAttribute('data-id');
+      const taskName = this.getAttribute('data-taskname');
+      const priority = this.getAttribute('data-priority');
+      const fromDate = this.getAttribute('data-fromdate');
+      const toDate = this.getAttribute('data-todate');
+      const description = this.getAttribute('data-description'); // Ensure this is included
+
+      // Populate modal form with the data
+      document.getElementById('editTaskId').value = taskId;
+      document.getElementById('editTaskName').value = taskName;
+      document.getElementById('editPriority').value = priority;
+      document.getElementById('editFromDate').value = fromDate;
+      document.getElementById('editToDate').value = toDate;
+      document.getElementById('editDescription').value = description; // Populate the description field
+
+      // Update the form action
+      const updateTaskUrl = `{% url 'update_task' 0 %}`.replace("0", taskId); // Ensure you replace the placeholder
+      document.getElementById('editTaskForm').action = updateTaskUrl;
+
+      // Show the modal
+      editTaskModal.show();
+    });
+  });
+});
+
+</script>
+
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const editTaskForm = document.getElementById('editTaskForm');
+    
+    editTaskForm.addEventListener('submit', function (e) {
+      e.preventDefault(); // Prevent default form submission
+
+      const taskId = document.getElementById('editTaskId').value;
+      const url = `/task/update/${taskId}/`;  // Ensure this matches your Django URL pattern
+
+      const formData = new FormData(editTaskForm); // Collect form data
+
+      // Send the AJAX request to update the task
+      fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': formData.get('csrfmiddlewaretoken') // Ensure CSRF token is included
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json(); // Parse JSON response
+      })
+      .then(data => {
+        if (data.status === 'success') {
+          // Handle success (e.g., close the modal, show success message)
+          alert('Task updated successfully!');
+          location.reload(); // Reload the page to show updated data
+        } else {
+          // Handle error
+          alert('Error updating task');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.'); // General error message
+      });
+    });
+  });
+</script>
+<script>
+  $(document).ready(function() {
+      // Initialize Select2 on the dropdown
+      $('#parent_task').select2({
+          placeholder: "Search and select a task", // Placeholder text
+          allowClear: true,                        // Allow users to clear the selection
+          width: '100%'
+      });
+  });
+</script>
+
+ 
+<script>
+  $(document).ready(function () {
+      $('#createtask').on('submit', function (e) {
+          e.preventDefault(); // Prevent default form submission
+
+          // Perform client-side validation
+          if (!validateForm()) {
+              return; // Stop execution if validation fails
+          }
+
+          // If validation passes, show the processing dialog
+          Swal.fire({
+              title: 'Processing...',
+              text: 'Please wait while your request is being processed.',
+              allowOutsideClick: false,
+              didOpen: () => {
+                  Swal.showLoading();
+              }
+          });
+
+          // Submit the form via AJAX
+          $.ajax({
+              url: $(this).attr('action'),
+              type: $(this).attr('method'),
+              data: $(this).serialize(),
+              success: function (response) {
+                  Swal.fire({
+                      icon: 'success',
+                      title: 'Success!',
+                      text: 'The task has been successfully created and emails have been sent.',
+                  }).then(() => {
+                      // Reload the page or redirect
+                      location.reload();
+                  });
+              },
+              error: function (xhr) {
+                  let errorMessage = 'Something went wrong. Please try again.';
+                  if (xhr.responseJSON && xhr.responseJSON.error) {
+                      errorMessage = xhr.responseJSON.error;
+                  }
+                  Swal.fire({
+                      icon: 'error',
+                      title: 'Error!',
+                      text: errorMessage,
+                  });
+              }
+          });
+      });
+
+      // Validation function
+      function validateForm() {
+          let isValid = true;
+          const taskName = $('#taskname').val().trim();
+          const priority = $('#priority').val();
+          const fromDate = $('#fromDate').val();
+          const toDate = $('#toDate').val();
+          const description = $('#description').val().trim();
+          const selectedUsers = $('#selected_users').val();
+          const isChildChecked = $('#is_child_checkbox').is(':checked');
+          const parentTask = $('#parent_task').val();
+
+          // Task Name validation
+          if (!taskName) {
+              isValid = false;
+              Swal.fire('Validation Error', 'Task name is required.', 'warning');
+              return isValid; // Stop further validation
+          }
+
+          // Priority validation
+          if (!priority) {
+              isValid = false;
+              Swal.fire('Validation Error', 'Please select a priority.', 'warning');
+              return isValid; // Stop further validation
+          }
+
+          // Date validation
+          if (!fromDate || !toDate) {
+              isValid = false;
+              Swal.fire('Validation Error', 'Please select valid dates.', 'warning');
+              return isValid; // Stop further validation
+          }
+
+          // Ensure fromDate is earlier than or equal to toDate
+          if (new Date(fromDate) > new Date(toDate)) {
+              isValid = false;
+              Swal.fire('Validation Error', 'From date cannot be later than to date.', 'warning');
+              return isValid; // Stop further validation
+          }
+
+          // Description validation
+          if (!description) {
+              isValid = false;
+              Swal.fire('Validation Error', 'Description is required.', 'warning');
+              return isValid; // Stop further validation
+          }
+
+          // Select Users validation
+          if (!selectedUsers || selectedUsers.length === 0) {
+              isValid = false;
+              Swal.fire('Validation Error', 'Please select at least one user.', 'warning');
+              return isValid; // Stop further validation
+          }
+
+          // Parent Task validation if "Is Child" is checked
+          if (isChildChecked && (!parentTask || parentTask === '')) {
+              isValid = false;
+              Swal.fire('Validation Error', 'Please select a parent task if "Is Child" is checked.', 'warning');
+              return isValid; // Stop further validation
+          }
+
+          return isValid;
+      }
+  });
+</script>
+
+ 
+ 
+ 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ 
+ 
+
+
+</body>
+
+
+{% endblock content %}

@@ -1,0 +1,306 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <title>Dashboard - NiceAdmin Bootstrap Template</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+ 
+  <!-- Favicons -->
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/img/logos.jpg' %}" rel="icon">
+  <link href="{% static 'NiceAdmin/NiceAdmin/asset/img/apple-touch-icon.png' %}" rel="apple-touch-icon">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/vendor/quill/quill.snow.css' %}" rel="stylesheet">
+  
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/vendor/quill/quill.bubble.css' %}" rel="stylesheet">
+  
+  
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/vendor/simple-datatables/style.css' %}" rel="stylesheet">
+
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/vendor/remixicon/remixicon.css' %}" rel="stylesheet">
+  
+  <!-- Template Main CSS File -->
+  <link href="{% static 'NiceAdmin/NiceAdmin/assets/css/style.css' %}" rel="stylesheet">
+
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  
+  <link rel="stylesheet" href="{% static 'NiceAdmin/NiceAdmin/assets/css/styles.css' %}" id="theme-style">
+  
+
+  
+</head>
+
+<body>
+
+
+
+<!-- <div id="main-content" style="display: none;"> -->
+
+<div class="layout-wrapper layout-content-navbar">
+  <div class="layout-container">
+
+  {% include 'common-templates/sidebar.html' %}
+
+  {% include 'common-templates/navbar.html' %}
+
+   </div>
+</div>
+<!-- </div> -->
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>  <!-- Include SweetAlert2 -->
+
+
+<script>
+  const INACTIVITY_TIMEOUT = 2 * 60 * 60 * 1000;
+  // const INACTIVITY_TIMEOUT = 30 * 1000; // 30 seconds
+
+  let inactivityTimer;
+
+  function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => logoutUser('timeout'), INACTIVITY_TIMEOUT);
+  }
+
+  function sendLogoutSignal(reason) {
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      fetch('/save-logout-time/', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': csrfToken,
+          },
+          body: `reason=${reason}`
+      })
+      .then(response => response.json())
+      .then(data => {
+          // console.log("Logout signal sent:", data);
+      })
+      .catch(error => {
+          console.error("Error sending logout signal:", error);
+      });
+  }
+
+  function logoutUser(reason) {
+      localStorage.setItem('sessionTimeout', 'true');
+      sendLogoutSignal(reason);
+      window.location.href = "{% url 'login' %}";
+  }
+
+  window.addEventListener("offline", () => {
+      console.log("Network disconnected. Logging out.");
+      logoutUser('network_disconnect');
+  });
+
+  document.addEventListener("mousemove", resetInactivityTimer);
+  document.addEventListener("keydown", resetInactivityTimer);
+  document.addEventListener("click", resetInactivityTimer);
+
+  resetInactivityTimer();
+</script>
+
+
+<script>
+
+// Check if the browser supports Notificationsa
+if ("Notification" in window) {
+    // Request permission for notifications
+    if (Notification.permission === "default") {
+        Notification.requestPermission()
+            .then(permission => {
+                if (permission === "granted") {
+                    console.log("Notification permission granted.");
+                } else {
+                  alert("permission denied")
+                    console.error("Notification permission denied.");
+                }
+            });
+    }
+} else {
+    console.error("This browser does not support notifications.");
+}
+
+// Function to display browser push notification
+function showNotification(message) {
+    if (Notification.permission === "granted") {
+        const notification = new Notification("New Message Received!", {
+            body: message,
+            icon: "https://cdn-icons-png.flaticon.com/512/1827/1827348.png", // Notification icon
+        });
+
+        // Optional: Notification click event
+        notification.onclick = () => {
+            window.focus();
+            window.location.href = "{% url 'login' %}";
+        };
+    } else {
+      alert("not granted")
+        console.warn("Notification permission not granted yet.");
+    }
+}
+
+// Check for new notifications every 5 seconds
+setInterval(fetchNotifications, 5000);
+
+// Fetch notifications immediately when the page loads
+document.addEventListener("DOMContentLoaded", fetchNotifications);
+</script>
+
+<!-- chat notfication -->
+ 
+ <!-- Include the notification script here -->
+ <script>
+   document.addEventListener("DOMContentLoaded", function () {
+    const processedNotifications = new Set(JSON.parse(localStorage.getItem("processedNotifications") || "[]"));
+    let lastChecked = Date.now(); // Keep track of when you last checked for notifications
+ 
+    // Function to fetch and handle new notifications
+    function fetchNotificationCounts() {
+        fetch("{% url 'get_notifications' %}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.notifications) {
+                    let newNotifications = false;
+ 
+                    data.notifications.forEach(notification => {
+                        // If notification is new (not processed before), trigger a desktop notification
+                        if (!processedNotifications.has(notification.id)) {
+                            processedNotifications.add(notification.id);
+                            showDesktopNotification(notification);
+                            newNotifications = true;  // Flag to check if new notifications exist
+                        }
+                    });
+ 
+                    // If new notifications were processed, update localStorage
+                    if (newNotifications) {
+                        localStorage.setItem("processedNotifications", JSON.stringify(Array.from(processedNotifications)));
+                    }
+                }
+            })
+            .catch(error => console.error("Error fetching notifications:", error));
+    }
+ 
+    // Function to show a desktop notification
+    function showDesktopNotification(notification) {
+        if (!("Notification" in window)) {
+            console.log("This browser does not support desktop notifications.");
+            return;
+        }
+ 
+        if (Notification.permission === "granted") {
+            const options = {
+                body: `You have ${notification.unread_count} new messages from task management chatapp.`,
+            };
+ 
+            new Notification("New Message", options);
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    showDesktopNotification(notification);
+                }
+            });
+        }
+    }
+ 
+    // Check for notifications periodically, but only if last check was not too recent
+    setInterval(() => {
+        const currentTime = Date.now();
+        if (currentTime - lastChecked > 3000) { // Wait at least 3 seconds between checks
+            fetchNotificationCounts();
+            lastChecked = currentTime; // Update last checked time
+        }
+    }, 10000);  // Check every 10 seconds
+ 
+    // Fetch notifications initially when the page loads
+    fetchNotificationCounts();
+});
+ 
+</script>
+ 
+ 
+     
+    
+    
+
+  {% block content %}
+
+  {% endblock content %}
+
+
+  <!-- ======= Footer ======= -->
+  <footer id="footer" class="footer">
+    <div class="copyright">
+      &copy; Copyright <strong><span>Accsys Consulting</span></strong>. All Rights Reserved
+    </div>
+    <div class="credits">
+     
+      Designed by <a href="https://accsysconsulting.com/" target="_blank">Accsys Consulting</a>
+    </div>
+  </footer><!-- End Footer -->
+  
+  
+
+
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+  <!-- Vendor JS Files -->
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/vendor/apexcharts/apexcharts.min.js' %}"></script>
+  
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/vendor/chart.js/chart.umd.js' %}"></script>
+  
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/vendor/echarts/echarts.min.js' %}"></script>
+  
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/vendor/quill/quill.min.js' %}"></script>
+  
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/vendor/tinymce/tinymce.min.js' %}"></script>
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/vendor/simple-datatables/simple-datatables.js' %}"></script>
+
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/js1/jspdf.js' %}"></script>
+
+
+
+  <!-- Template Main JS File -->
+  <script src="{% static 'NiceAdmin/NiceAdmin/assets/js/main.js' %}"></script>
+  <!-- Include SweetAlert CSS -->
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+  <!-- Optional: Add a theme if you want -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+ 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+  <!-- jsPDF Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- jsPDF AutoTable Plugin -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
+
+
+  
+</body>
+
+
+
+</html>

@@ -1,0 +1,158 @@
+{% extends 'main.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<body>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Include Select2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<!-- Include jQuery (If not already included) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Include Select2 JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+
+
+ 
+
+  <main id="main" class="main">
+
+    <div class="pagetitle">
+      <h1>Assign Task</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'workflowmgt' %}">Workflowmanagement</a></li>
+          <li class="breadcrumb-item active">Assign Task</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+
+    
+
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-12">              
+           <!-- Button to toggle visibility of the card -->
+
+<!-- Initially hidden card -->
+<div class="col-lg-12" id="projectCard">
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Assign Task</h5>
+     
+      <form class="row g-3 needs-validation" method="POST"  novalidate>
+        <!-- Form fields -->
+         {% csrf_token %}
+
+             
+<div class="col-md-6">
+    <label for="validationPriority" class="form-label">Remark <span class="text-danger">*</span></label>
+    <select class="form-select" id="validationPriority" name="remark" required>
+      <option selected disabled value="">Select remark...</option>
+      {% for remark in remarks %}
+      <option value="{{ remark }}" {% if remark in assigned_remarks %}disabled{% endif %}>
+          {{ remark }}{% if remark in assigned_remarks %} (Assigned){% endif %}
+      </option>
+  {% endfor %}
+    </select>
+    <div class="invalid-feedback">Please select a remark.</div>
+  </div>
+
+
+       
+       
+
+
+    
+<div class="col-md-6">
+    <label for="validationPriority" class="form-label">Priority <span class="text-danger">*</span></label>
+    <select class="form-select" id="validationPriority" name="priority" required>
+      <option selected disabled value="">Select Priority...</option>
+      <option value="High">High</option>
+      <option value="Medium">Medium</option>
+      <option value="Low">Low</option>
+    </select>
+    <div class="invalid-feedback">Please select a priority level.</div>
+  </div>
+
+  <div class="col-md-6">
+    <label for="fromDate" class="form-label">Assigned Date<span class="text-danger">*</span></label>
+    <input type="date" class="form-control" id="fromDate" name="assigned_date" required>
+    <div class="invalid-feedback">Please select a Assigned date.</div>
+  </div>
+
+
+  <div class="col-md-6">
+    <label for="fromDate" class="form-label">Final Date <span class="text-danger">*</span></label>
+    <input type="date" class="form-control" id="fromDate" name="final_date" required>
+    <div class="invalid-feedback">Please select a Final date.</div>
+  </div>
+
+  
+ <!-- Form Field -->
+<div class="col-md-12">
+    <label for="participants" class="form-label">Assigned To<span class="text-danger">*</span></label>
+    <select id="participants" name="selected_users" class="form-select" multiple required>
+        <option></option> <!-- Placeholder support -->
+        {% for user in users %}
+        <option value="{{ user.id }}">{{ user.username }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Initialize Select2 -->
+<script>
+    $(document).ready(function() {
+        $('#participants').select2({
+            placeholder: "Select Participants", // Proper placeholder
+            allowClear: true,                 // Allow clearing selection
+            width: '100%'                      // Ensure full-width dropdown
+        });
+    });
+</script>
+  
+  <div class="col-md-12">
+    <label for="fromDate" class="form-label">Description<span class="text-danger">*</span></label>
+    <textarea name="description" id="description" class="form-control" rows="3"></textarea>
+    <div class="invalid-feedback">Please select a Description.</div>
+  </div>
+  <div class="col-12 d-flex justify-content-between">
+    <!-- Assign Task Button -->
+    <button type="submit" class="btn btn-primary">Assign Task</button>
+
+    <!-- Back to Meeting List Button (Right-Aligned) -->
+    <a href="{% url 'meeting_list' %}" class="btn btn-danger ms-auto">Back to Meeting List</a>
+</div>
+<!-- cur_frm.doc -->
+
+    </div>
+  </div>
+</div>
+
+
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+  
+
+
+
+
+
+</body>
+
+
+
+
+
+{% endblock content %}

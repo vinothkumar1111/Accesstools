@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Replies</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Email Replies</h2>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Subject</th>
+                    <th>Body</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reply in emails %}
+                <tr>
+                    <td>{{ reply.sender }}</td>
+                    <td>{{ reply.recipient }}</td>
+                    <td>{{ reply.subject }}</td>
+                    <td>{{ reply.body }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

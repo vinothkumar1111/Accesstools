@@ -1,0 +1,20 @@
+<h1>Received Emails</h1>
+{% for email in received_emails %}
+    <div>
+        <h3>{{ email.message.subject }}</h3>
+        <p>{{ email.message.body }}</p>
+        <p>From: {{ email.message.sender }}</p>
+        <p>Date Received: {{ email.message.date_received }}</p>
+    </div>
+{% endfor %}
+
+<h1>Replied Emails</h1>
+{% for email in replied_emails %}
+    <div>
+        <h3>{{ email.message.subject }}</h3>
+        <p>{{ email.message.body }}</p>
+        <p>From: {{ email.message.sender }}</p>
+        <p>Date Received: {{ email.message.date_received }}</p>
+        <p>Reply to: {{ email.original_message.message.subject }}</p>
+    </div>
+{% endfor %}
